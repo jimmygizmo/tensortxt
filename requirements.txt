@@ -1,0 +1,9 @@
+# Requirements for the TensorTXT project
+
+tensorflow
+
+#flask
+#flask-restful
+#jsonify
+
+
