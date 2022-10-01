@@ -1,0 +1,18 @@
+
+Guided initially by these TF docs:
+https://www.tensorflow.org/tutorials/keras/text_classification
+
+My Collab Notebook for this. (It's probably private access but linking here for myself for now):
+https://colab.research.google.com/drive/1qUazAzM4mhFadot1abxom4hIMfjMDBU7#scrollTo=hGB0TYaDEX61
+TODO: See how to make a public (possibly branded) Collab site, if that is possible.
+
+Related GPU Hardware Test and Performance Comparison Collab from Tensorflow:
+https://colab.research.google.com/notebooks/gpu.ipynb#scrollTo=oM_8ELnJq_wd
+
+IPYNB file on GitHub:
+https://github.com/tensorflow/docs/blob/master/site/en/tutorials/keras/text_classification.ipynb
+From TF Docs GitHub site:
+https://github.com/tensorflow/docs
+
+
+
