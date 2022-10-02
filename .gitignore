@@ -1,5 +1,10 @@
 # .gitignore
 
+# Project will download training data. The aclImdb/ directory structure is just an area data is read from.
+# It is not a workspace or output area.
+aclImdb_v1.tar.gz
+aclImdb/
+
 # IntelliJ IDEs
 .idea/
 

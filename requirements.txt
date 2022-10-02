@@ -1,6 +1,8 @@
 # Requirements for the TensorTXT project
 
 tensorflow
+keras
+matplotlib
 
 #flask
 #flask-restful

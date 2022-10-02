@@ -1,0 +1,21 @@
+# Project will download training data.
+# aclImdb_v1.tar.gz, approx 85 MB.
+# The unzipped dir struct is about 300MB. So total it is about 400MB, but you could delete the zip, I guess.
+# The aclImdb/ directory structure is just an area data is read from.
+# It is not a workspace or output area.
+
+# The project and tensorflow/keras usage in the python code expect a directory/data-structure like this:
+
+main_directory/
+...class_a/
+......a_text_1.txt
+......a_text_2.txt
+...class_b/
+......b_text_1.txt
+......b_text_2.txt
+
+# This download has been tested with this code, and it all works in the same way with the same results as the Collab
+# created from the tutorial code.
+# Tutorial:
+#
+
