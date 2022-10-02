@@ -14,8 +14,19 @@ from keras import losses
 # "install keras". tf brought it in, I am pretty sure, but the IDE warning implies otherwise. The change in actual
 # import style needed could have happened between tf 2.9 and 2.10. Also, the tutorial code did not need any changes
 # for accessing objects.
+# TODO: Try this import: from tensorflow import keras
+# Also, here is a variant for version. Look up the difference.
+# print(tf.version.VERSION)
 
 print(tf.__version__)
+
+
+
+# TODO: IMPLEMENTING SAVING AND LOADING OF MODELS. FOLLOWING THIS:
+# https://www.tensorflow.org/tutorials/keras/save_and_load
+# https://www.tensorflow.org/tutorials/keras/save_and_load#save_checkpoints_during_training
+
+
 
 url = "https://ai.stanford.edu/~amaas/data/sentiment/aclImdb_v1.tar.gz"
 
@@ -164,54 +175,72 @@ loss, accuracy = model.evaluate(test_ds)
 print("Loss: ", loss)
 print("Accuracy: ", accuracy)
 
-history_dict = history.history
-history_dict.keys()
 
-acc = history_dict['binary_accuracy']
-val_acc = history_dict['val_binary_accuracy']
-loss = history_dict['loss']
-val_loss = history_dict['val_loss']
+def plots():
+    history_dict = history.history
+    history_dict.keys()
 
-epochs = range(1, len(acc) + 1)
+    acc = history_dict['binary_accuracy']
+    val_acc = history_dict['val_binary_accuracy']
+    loss = history_dict['loss']
+    val_loss = history_dict['val_loss']
 
-# "bo" is for "blue dot"
-plt.plot(epochs, loss, 'bo', label='Training loss')
-# b is for "solid blue line"
-plt.plot(epochs, val_loss, 'b', label='Validation loss')
-plt.title('Training and validation loss')
-plt.xlabel('Epochs')
-plt.ylabel('Loss')
-plt.legend()
+    epochs = range(1, len(acc) + 1)
 
-plt.show()
+    # "bo" is for "blue dot"
+    plt.plot(epochs, loss, 'bo', label='Training loss')
+    # b is for "solid blue line"
+    plt.plot(epochs, val_loss, 'b', label='Validation loss')
+    plt.title('Training and validation loss')
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
+    plt.legend()
 
-plt.plot(epochs, acc, 'bo', label='Training acc')
-plt.plot(epochs, val_acc, 'b', label='Validation acc')
-plt.title('Training and validation accuracy')
-plt.xlabel('Epochs')
-plt.ylabel('Accuracy')
-plt.legend(loc='lower right')
+    plt.show()
 
-plt.show()
+    plt.plot(epochs, acc, 'bo', label='Training acc')
+    plt.plot(epochs, val_acc, 'b', label='Validation acc')
+    plt.title('Training and validation accuracy')
+    plt.xlabel('Epochs')
+    plt.ylabel('Accuracy')
+    plt.legend(loc='lower right')
 
+    plt.show()
+
+
+# Moved plotting to a function, so I can turn it off. Debugging issue where code after here does not seem to get
+# executed.
+# plots()
+
+print("test phase")
+
+print("export")
 export_model = tf.keras.Sequential([
-  vectorize_layer,
-  model,
-  layers.Activation('sigmoid')
+    vectorize_layer,
+    model,
+    layers.Activation('sigmoid')
 ])
 
+print("compile")
 export_model.compile(
     loss=losses.BinaryCrossentropy(from_logits=False), optimizer="adam", metrics=['accuracy']
 )
 
+print("evaluate")
 # Test it with `raw_test_ds`, which yields raw strings
 loss, accuracy = export_model.evaluate(raw_test_ds)
 print(accuracy)
 
 examples = [
-  "The movie was great!",
-  "The movie was okay.",
-  "The movie was terrible..."
+    "The movie was great!",
+    "The movie was okay.",
+    "The movie was terrible..."
 ]
 
-export_model.predict(examples)
+print("predict")
+result = export_model.predict(examples)
+
+print(result)
+print()
+print("done")
+

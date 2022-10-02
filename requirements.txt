@@ -4,6 +4,10 @@ tensorflow
 keras
 matplotlib
 
+# for saving models
+pyyaml
+h5py
+
 #flask
 #flask-restful
 #jsonify
