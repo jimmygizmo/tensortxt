@@ -1,0 +1,9 @@
+# NOTE: Some TF docs show an import which did not work for me and may have changed with 2.9 -> 2.10. In my case,
+# the docs showed "from tensorflow.keras import layers", which did not work but might have previously, I don't know.
+# The fix for me was not to change any other code except the import. This works: "from keras import layers".
+# IDE (PyCharm) Warning: When PyCharm sees "import keras" it might warn you that your requirements.txt file is
+# missing that package. I added it to the file to stop the warning, HOWEVER, I believe keras is already installed
+# as a dependency of tensorflow. The issue feels slightly unresolved. Maybe the plan is to move keras out of
+# tensorflow and then advise people to install it separately at some point? I don't know. But the info I have here
+# and my usage in this project is my best approach to this minor issue, which I do feel is worth noting.
+

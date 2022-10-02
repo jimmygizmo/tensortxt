@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+from pathlib import Path
 import os
 import re
 import shutil
@@ -7,18 +8,6 @@ import tensorflow as tf
 
 from keras import layers
 from keras import losses
-
-# NOTE: Some TF docs show an import which did not work for me and may have changed with 2.9 -> 2.10. In my case,
-# the docs showed "from tensorflow.keras import layers", which did not work but might have previously, I don't know.
-# The fix for me was not to change any other code except the import. This works: "from keras import layers".
-# IDE (PyCharm) Warning: When PyCharm sees "import keras" it might warn you that your requirements.txt file is
-# missing that package. I added it to the file to stop the warning, HOWEVER, I believe keras is already installed
-# as a dependency of tensorflow. The issue feels slightly unresolved. Maybe the plan is to move keras out of
-# tensorflow and then advise people to install it separately at some point? I don't know. But the info I have here
-# and my usage in this project is my best approach to this minor issue, which I do feel is worth noting.
-
-# TODO: Clarify the differences between module.version.VERSION and module.__version__.
-# print(tf.version.VERSION)
 
 print(tf.__version__)
 
@@ -31,27 +20,41 @@ print(tf.__version__)
 
 url = "https://ai.stanford.edu/~amaas/data/sentiment/aclImdb_v1.tar.gz"
 
-dataset = tf.keras.utils.get_file("aclImdb_v1", url,
-                                  untar=True, cache_dir='.',
-                                  cache_subdir='')
+dataset = tf.keras.utils.get_file("aclImdb_v1",
+                                  url,
+                                  untar=True,
+                                  cache_dir='.',
+                                  cache_subdir=''
+                                  )
 
-dataset_dir = os.path.join(os.path.dirname(dataset), 'aclImdb')
+# dataset_dir = os.path.join(os.path.dirname(dataset), 'aclImdb')
 
-"""
-Just have a quick look at the dir structure and then one of the files."""
 
-os.listdir(dataset_dir)
+workspace_dir = os.path.dirname(dataset)
+# TODO: Hypothesis, workspace_dir might always be the current working directory. Depends on tf.keras.utils.get_file()
+# but this is likely. Would be good to positively clarify. Scripts might not always be invoked from the assumed
+# CWD and/or workspace_dir. Some assumptions on relative locations should eventually be pinned down to standard and
+# consistent locations for more robust code.
+print(f"#####]    workspace_dir: {workspace_dir}")
+
+dataset_dir = os.path.join(workspace_dir, 'aclImdb')
+print(f"#####]    dataset_dir: {dataset_dir}")
+
+print(f"#####]    Just have a quick look at the dir structure and then one of the files.")
+print(f"#####]    dataset_dir listing:\n\n{os.listdir(dataset_dir)}")
 
 train_dir = os.path.join(dataset_dir, 'train')
-os.listdir(train_dir)
+print(f"#####]    train_dir listing:\n\n{os.listdir(train_dir)}")
+
 
 sample_file = os.path.join(train_dir, 'pos/1181_9.txt')
+print(f"#####]    sample file: {sample_file}\n\n")
+
 with open(sample_file) as f:
     print(f.read())
 
-"""Load dataset. Expected directory structure:
+print("""Expected directory structure:
 
-```
 main_directory/
 ...class_a/
 ......a_text_1.txt
@@ -60,19 +63,23 @@ main_directory/
 ......b_text_1.txt
 ......b_text_2.txt
 
-```
+""")
 
-Clean up unneeded dirs before training.
-"""
 # This will error on the second try because no such dir will be found.
 # Can do this only once after unpacking source data.
+print("#####]    Removing unsupported data from the raw dataset")
+# TODO: Add an existence check or use a lib that doesn't care. (pathlib?)
+# Ideally we would download the data set once, remove this stuff once and then do training repeatedly. The original
+# code was a one-time Collab from TF docs, and it is still being adapted to something more reusable and robust.
 remove_dir = os.path.join(train_dir, 'unsup')
 shutil.rmtree(remove_dir)
+
+
+print(f"#####]    RAW TRAINING")
 
 batch_size = 32
 seed = 42
 
-# raw_training_dataset
 raw_train_ds = tf.keras.utils.text_dataset_from_directory(
     'aclImdb/train',
     batch_size=batch_size,
@@ -80,15 +87,16 @@ raw_train_ds = tf.keras.utils.text_dataset_from_directory(
     subset='training',
     seed=seed)
 
+print(f"#####]    Sample of 5:\n")
 for text_batch, label_batch in raw_train_ds.take(1):
-    for i in range(3):
+    for i in range(5):
         print("Review", text_batch.numpy()[i])
         print("Label", label_batch.numpy()[i])
 
 print("Label 0 corresponds to", raw_train_ds.class_names[0])
 print("Label 1 corresponds to", raw_train_ds.class_names[1])
 
-# raw_validation_dataset
+print(f"#####]    RAW VALIDATION")
 raw_val_ds = tf.keras.utils.text_dataset_from_directory(
     'aclImdb/train',
     batch_size=batch_size,
