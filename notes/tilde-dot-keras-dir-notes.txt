@@ -1,0 +1,25 @@
+All I have under ~/.keras is one small JSON file.  (Early in usage.)
+
+~/.keras/keras.json
+* And it is missing a newline on the last line. cat and tail show a warning character for this.
+* vi and webstorm (json default) do not clearly show the missing NL.
+* So something in Keras is writing malformed JSON files (for prefs and maybe more.)
+
+
+(ve.tensortxt) ➜  tensortxt git:(main) ✗ ls -alt ~/.keras
+total 8
+drwxr-xr-x@ 88 bilbo  staff  2816 Oct  2 14:23 ..
+-rw-r--r--   1 bilbo  staff   120 Oct  1 00:44 keras.json
+drwxr-xr-x   3 bilbo  staff    96 Oct  1 00:44 .
+
+(ve.tensortxt) ➜  tensortxt git:(main) ✗ cat ~/.keras/keras.json
+
+{
+    "floatx": "float32",
+    "epsilon": 1e-07,
+    "backend": "tensorflow",
+    "image_data_format": "channels_last"
+}
+
+* I did not show cat's missing final ML warning character here, which shows to the right of the final }
+

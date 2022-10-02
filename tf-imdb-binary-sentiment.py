@@ -23,22 +23,28 @@ def log(msg):
 
 
 url = "https://ai.stanford.edu/~amaas/data/sentiment/aclImdb_v1.tar.gz"
+log(f"getting dataset .tar.gz file from: {url}")
 
+# https://www.tensorflow.org/api_docs/python/tf/keras/utils/get_file
 dataset = tf.keras.utils.get_file("aclImdb_v1",
                                   url,
                                   untar=True,
                                   cache_dir='.',
                                   cache_subdir=''
                                   )
-
-# dataset_dir = os.path.join(os.path.dirname(dataset), 'aclImdb')
-
+# NOTE: cache_dir will default to "~/.keras". TODO: Clarify why this is called "cache" since at the moment it looks
+#                                                   more like a "download dir". Clarify exact purpose of "cache.dir".
 
 workspace_dir = os.path.dirname(dataset)
+# There is an implication here that the object/variable "dataset" is either a string (path to dir of dataset structure)
+# or has a .__string__() taking effect here in string context from os.path. which returns such.
+# Also, This returns ".", the value that was passed to cache_dir. So "cache_dir" might have multiple purposes.
+
 # TODO: Hypothesis, workspace_dir might always be the current working directory. Depends on tf.keras.utils.get_file()
 # but this is likely. Would be good to positively clarify. Scripts might not always be invoked from the assumed
 # CWD and/or workspace_dir. Some assumptions on relative locations should eventually be pinned down to standard and
 # consistent locations for more robust code.
+# UPDATE: Notice that cache_dir is specified as "." and this is also what
 log(f"workspace_dir: {workspace_dir}")
 
 dataset_dir = os.path.join(workspace_dir, 'aclImdb')
@@ -52,7 +58,7 @@ log(f"train_dir listing:\n\n{os.listdir(train_dir)}")
 
 
 sample_file = os.path.join(train_dir, 'pos/1181_9.txt')
-log(f"sample file: {sample_file}\n\n")
+log(f"sample file: {sample_file}\n")
 
 with open(sample_file) as f:
     print(f.read())
@@ -84,7 +90,7 @@ log(f"RAW TRAINING\n")
 batch_size = 32
 seed = 42
 
-raw_train_ds = tf.keras.utils.text_dataset_from_directory(
+raw_train_dataset = tf.keras.utils.text_dataset_from_directory(
     'aclImdb/train',
     batch_size=batch_size,
     validation_split=0.2,
@@ -92,17 +98,17 @@ raw_train_ds = tf.keras.utils.text_dataset_from_directory(
     seed=seed)
 
 print(f"#####]    Sample of 5:\n")
-for text_batch, label_batch in raw_train_ds.take(1):
+for text_batch, label_batch in raw_train_dataset.take(1):
     for i in range(5):
         print("Review", text_batch.numpy()[i])
         print("Label", label_batch.numpy()[i])
 
-print("Label 0 corresponds to", raw_train_ds.class_names[0])
-print("Label 1 corresponds to", raw_train_ds.class_names[1])
+print("Label 0 corresponds to", raw_train_dataset.class_names[0])
+print("Label 1 corresponds to", raw_train_dataset.class_names[1])
 
 log(f"raw validation dataset from directory\n")
 
-raw_val_ds = tf.keras.utils.text_dataset_from_directory(
+raw_validation_dataset = tf.keras.utils.text_dataset_from_directory(
     'aclImdb/train',
     batch_size=batch_size,
     validation_split=0.2,
@@ -111,7 +117,7 @@ raw_val_ds = tf.keras.utils.text_dataset_from_directory(
 
 log(f"raw test dataset from directory\n")
 
-raw_test_ds = tf.keras.utils.text_dataset_from_directory(
+raw_test_dataset = tf.keras.utils.text_dataset_from_directory(
     'aclImdb/test',
     batch_size=batch_size)
 
@@ -135,7 +141,7 @@ vectorize_layer = layers.TextVectorization(
     output_sequence_length=sequence_length)
 
 # Make a text-only dataset (without labels), then call adapt
-train_text = raw_train_ds.map(lambda x, y: x)
+train_text = raw_train_dataset.map(lambda x, y: x)
 vectorize_layer.adapt(train_text)
 
 
@@ -145,19 +151,19 @@ def vectorize_text(text, label):
 
 
 # retrieve a batch (of 32 reviews and labels) from the dataset
-text_batch, label_batch = next(iter(raw_train_ds))
+text_batch, label_batch = next(iter(raw_train_dataset))
 first_review, first_label = text_batch[0], label_batch[0]
 print("Review", first_review)
-print("Label", raw_train_ds.class_names[first_label])
+print("Label", raw_train_dataset.class_names[first_label])
 print("Vectorized review", vectorize_text(first_review, first_label))
 
 print("1787 ---> ",vectorize_layer.get_vocabulary()[1787])
 print("2601 ---> ",vectorize_layer.get_vocabulary()[2601])
 print('Vocabulary size: {}'.format(len(vectorize_layer.get_vocabulary())))
 
-train_ds = raw_train_ds.map(vectorize_text)
-val_ds = raw_val_ds.map(vectorize_text)
-test_ds = raw_test_ds.map(vectorize_text)
+train_ds = raw_train_dataset.map(vectorize_text)
+val_ds = raw_validation_dataset.map(vectorize_text)
+test_ds = raw_test_dataset.map(vectorize_text)
 
 AUTOTUNE = tf.data.AUTOTUNE
 
@@ -192,7 +198,7 @@ print("Loss: ", loss)
 print("Accuracy: ", accuracy)
 
 
-# Plots
+log(f"HISTORY PLOTS\n")
 
 history_dict = history.history
 history_dict.keys()
@@ -204,6 +210,9 @@ val_loss = history_dict['val_loss']
 
 epochs = range(1, len(acc) + 1)
 
+
+log(f"PLOT: Training Loss, Validation Loss\n")
+
 # "bo" is for "blue dot"
 plt.plot(epochs, loss, 'bo', label='Training loss')
 # b is for "solid blue line"
@@ -214,6 +223,9 @@ plt.ylabel('Loss')
 plt.legend()
 
 plt.show()
+
+
+log(f"PLOT: Training Accuracy, Validation Accuracy\n")
 
 plt.plot(epochs, acc, 'bo', label='Training acc')
 plt.plot(epochs, val_acc, 'b', label='Validation acc')
@@ -227,22 +239,24 @@ plt.show()
 
 log(f"TEST PHASE\n")
 
-log(f"export")
+
+log(f"ACTION: Sequential groups a linear stack of layers into a tf.keras.Model. Object name: export_model.")
+log(f"Sequential: vectorize_layer passed in, model passed in, layers.Activation: sigmoid")
 export_model = tf.keras.Sequential([
     vectorize_layer,
     model,
     layers.Activation('sigmoid')
 ])
 
-log(f"compile")
+log(f"export_model.compile - losses.BinaryCrossentropy-non-logits, optimizer: adam")
 export_model.compile(
     loss=losses.BinaryCrossentropy(from_logits=False), optimizer="adam", metrics=['accuracy']
 )
 
-log(f"evaluate")
-# Test it with `raw_test_ds`, which yields raw strings
-loss, accuracy = export_model.evaluate(raw_test_ds)
-print(accuracy)
+log(f"export_model.evaluate raw_test_dataset")
+# Test it with `raw_test_dataset`, which yields raw strings
+loss, accuracy = export_model.evaluate(raw_test_dataset)
+log(f"Accuracy:\n{accuracy}")
 
 examples = [
     "The movie was great!",
