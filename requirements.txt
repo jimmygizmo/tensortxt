@@ -1,15 +1,20 @@
 # Requirements for the TensorTXT project
 
 tensorflow
+
+# keras might still be brought in by tensorflow but they way it is imported now (2.9->2.10 change?)
+# causes a warning from PyCharm unless you add keras here. Does not hurt anything.
 keras
+
 matplotlib
 
-# for saving models
+# For saving and loading models: pyyaml, h5py
 pyyaml
 h5py
 
+
+# For possible integration into other projects, a REST service would be used:
 #flask
 #flask-restful
 #jsonify
-
 
