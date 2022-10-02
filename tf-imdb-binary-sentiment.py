@@ -12,6 +12,10 @@ from keras import losses
 print(tf.__version__)
 
 
+def log(msg):
+    print(f"\n[########]    {msg}")
+
+
 # TODO: IMPLEMENTING SAVING AND LOADING OF MODELS. FOLLOWING THIS:
 # https://www.tensorflow.org/tutorials/keras/save_and_load
 # https://www.tensorflow.org/tutorials/keras/save_and_load#save_checkpoints_during_training
@@ -35,25 +39,26 @@ workspace_dir = os.path.dirname(dataset)
 # but this is likely. Would be good to positively clarify. Scripts might not always be invoked from the assumed
 # CWD and/or workspace_dir. Some assumptions on relative locations should eventually be pinned down to standard and
 # consistent locations for more robust code.
-print(f"#####]    workspace_dir: {workspace_dir}")
+log(f"workspace_dir: {workspace_dir}")
 
 dataset_dir = os.path.join(workspace_dir, 'aclImdb')
-print(f"#####]    dataset_dir: {dataset_dir}")
+log(f"dataset_dir: {dataset_dir}")
 
-print(f"#####]    Just have a quick look at the dir structure and then one of the files.")
-print(f"#####]    dataset_dir listing:\n\n{os.listdir(dataset_dir)}")
+log(f"Just have a quick look at the dir structure and then one of the files.")
+log(f"dataset_dir listing:\n\n{os.listdir(dataset_dir)}")
 
 train_dir = os.path.join(dataset_dir, 'train')
-print(f"#####]    train_dir listing:\n\n{os.listdir(train_dir)}")
+log(f"train_dir listing:\n\n{os.listdir(train_dir)}")
 
 
 sample_file = os.path.join(train_dir, 'pos/1181_9.txt')
-print(f"#####]    sample file: {sample_file}\n\n")
+log(f"sample file: {sample_file}\n\n")
 
 with open(sample_file) as f:
     print(f.read())
 
-print("""Expected directory structure:
+print("""
+Expected directory structure:
 
 main_directory/
 ...class_a/
@@ -62,12 +67,11 @@ main_directory/
 ...class_b/
 ......b_text_1.txt
 ......b_text_2.txt
-
 """)
 
 # This will error on the second try because no such dir will be found.
 # Can do this only once after unpacking source data.
-print("#####]    Removing unsupported data from the raw dataset")
+log(f"Removing unsupported data from the raw dataset")
 # TODO: Add an existence check or use a lib that doesn't care. (pathlib?)
 # Ideally we would download the data set once, remove this stuff once and then do training repeatedly. The original
 # code was a one-time Collab from TF docs, and it is still being adapted to something more reusable and robust.
@@ -75,7 +79,7 @@ remove_dir = os.path.join(train_dir, 'unsup')
 shutil.rmtree(remove_dir)
 
 
-print(f"#####]    RAW TRAINING")
+log(f"RAW TRAINING\n")
 
 batch_size = 32
 seed = 42
@@ -96,7 +100,8 @@ for text_batch, label_batch in raw_train_ds.take(1):
 print("Label 0 corresponds to", raw_train_ds.class_names[0])
 print("Label 1 corresponds to", raw_train_ds.class_names[1])
 
-print(f"#####]    RAW VALIDATION")
+log(f"raw validation dataset from directory\n")
+
 raw_val_ds = tf.keras.utils.text_dataset_from_directory(
     'aclImdb/train',
     batch_size=batch_size,
@@ -104,14 +109,16 @@ raw_val_ds = tf.keras.utils.text_dataset_from_directory(
     subset='validation',
     seed=seed)
 
+log(f"raw test dataset from directory\n")
+
 raw_test_ds = tf.keras.utils.text_dataset_from_directory(
     'aclImdb/test',
     batch_size=batch_size)
 
 # Prepare dataset: standardization, tokenization, vectorization (clean up punct., split up words, convert to numbers)
+log(f"CUSTOM STANDARDIZATION\n")
 
 
-# CUSTOM STANDARDIZATION STEPS
 def custom_standardization(input_data):
     lowercase = tf.strings.lower(input_data)
     stripped_html = tf.strings.regex_replace(lowercase, '<br />', ' ')
@@ -218,21 +225,21 @@ plt.legend(loc='lower right')
 plt.show()
 
 
-print("#####]    TEST PHASE")
+log(f"TEST PHASE\n")
 
-print("#####]    export")
+log(f"export")
 export_model = tf.keras.Sequential([
     vectorize_layer,
     model,
     layers.Activation('sigmoid')
 ])
 
-print("#####]    compile")
+log(f"compile")
 export_model.compile(
     loss=losses.BinaryCrossentropy(from_logits=False), optimizer="adam", metrics=['accuracy']
 )
 
-print("#####]    evaluate")
+log(f"evaluate")
 # Test it with `raw_test_ds`, which yields raw strings
 loss, accuracy = export_model.evaluate(raw_test_ds)
 print(accuracy)
@@ -243,11 +250,11 @@ examples = [
     "The movie was terrible..."
 ]
 
-print("#####]    predict")
+log(f"predict")
 result = export_model.predict(examples)
 
 # In Collab, you would see the .predict() output automatically, but here we have to explicitly print it.
 print(result)
 print()
-print("#####]    done")
+log(f"done")
 
