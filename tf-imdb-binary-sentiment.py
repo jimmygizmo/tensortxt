@@ -135,8 +135,8 @@ raw_test_dataset = tf.keras.utils.text_dataset_from_directory(
 
 
 # Prepare dataset: standardization, tokenization, vectorization
-log(f"----  VECTORIZATION: CUSTOM STANDARDIZATION, TOKENIZATION  ----\n")
-# 1. Clean up punctuation, strip <br /> tags and regex-style-escape punctuation.
+log(f"----  CUSTOM STANDARDIZATION, TOKENIZATION, VECTORIZATION  ----\n")
+# 1. Lower-case, strip <br /> tags and regex-style-escape punctuation.
 # 2. split up words, convert to numbers)
 
 
@@ -158,8 +158,8 @@ vectorize_layer = layers.TextVectorization(
     output_sequence_length=sequence_length)
 
 # Make a text-only dataset (without labels), then call adapt
-train_text = raw_training_dataset.map(lambda x, y: x)
-vectorize_layer.adapt(train_text)
+training_text = raw_training_dataset.map(lambda x, y: x)
+vectorize_layer.adapt(training_text)
 
 
 def vectorize_text(text, label):
@@ -179,14 +179,14 @@ print("2601 ---> ", vectorize_layer.get_vocabulary()[2601])
 print('Vocabulary size: {}'.format(len(vectorize_layer.get_vocabulary())))
 
 training_dataset = raw_training_dataset.map(vectorize_text)
-val_ds = raw_validation_dataset.map(vectorize_text)
-test_ds = raw_test_dataset.map(vectorize_text)
+validation_dataset = raw_validation_dataset.map(vectorize_text)
+test_dataset = raw_test_dataset.map(vectorize_text)
 
 AUTOTUNE = tf.data.AUTOTUNE
 
 training_dataset = training_dataset.cache().prefetch(buffer_size=AUTOTUNE)
-val_ds = val_ds.cache().prefetch(buffer_size=AUTOTUNE)
-test_ds = test_ds.cache().prefetch(buffer_size=AUTOTUNE)
+validation_dataset = validation_dataset.cache().prefetch(buffer_size=AUTOTUNE)
+test_dataset = test_dataset.cache().prefetch(buffer_size=AUTOTUNE)
 
 embedding_dim = 16
 
@@ -206,10 +206,10 @@ model.compile(loss=losses.BinaryCrossentropy(from_logits=True),
 epochs = 10
 history = model.fit(
     training_dataset,
-    validation_data=val_ds,
+    validation_data=validation_dataset,
     epochs=epochs)
 
-loss, accuracy = model.evaluate(test_ds)
+loss, accuracy = model.evaluate(test_dataset)
 
 print("Loss: ", loss)
 print("Accuracy: ", accuracy)
@@ -256,8 +256,8 @@ plt.show()
 
 log(f"----  TEST PHASE  ----\n")
 
-log(f"ACTION: Sequential groups a linear stack of layers into a tf.keras.Model. Object name: export_model.")
-log(f"Sequential: vectorize_layer passed in, model passed in, layers.Activation: sigmoid")
+log(f"tf.keras.Sequential groups a linear stack of layers into a tf.keras.Model.")
+log(f"vectorize_layer passed in, model passed in, layers.Activation: sigmoid. Obj name: export_model.")
 export_model = tf.keras.Sequential([
     vectorize_layer,
     model,
@@ -280,14 +280,18 @@ log(f"----  PREDICTION  ----\n")
 examples = [
     "The movie was great!",
     "The movie was okay.",
-    "The movie was terrible..."
+    "The movie was terrible.",
+    "I actually liked this film.",
+    "Hated it, hated it, HATED IT!",
+    "My kid makes better movies than this."
 ]
 
-log(f"predict")
+log(f"Predict. Show array of review text phrases and corresponding array of model-predicted labels.")
 result = export_model.predict(examples)
 
 # In Collab, you would see the .predict() output automatically, but here we have to explicitly print it.
+print(examples)
 print(result)
-print()
-log(f"--  SENTIMENT ANALYSIS TENSORFLOW/KERAS DEMONSTRATION COMPLETE.  Exiting.")
+
+log(f"--  SENTIMENT ANALYSIS TENSORFLOW/KERAS DEMONSTRATION COMPLETE.  Exiting.\n")
 
