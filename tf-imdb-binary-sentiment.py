@@ -1,3 +1,5 @@
+#! /usr/bin/env python
+
 import matplotlib.pyplot as plt
 from pathlib import Path
 import os
@@ -5,11 +7,12 @@ import re
 import shutil
 import string
 import tensorflow as tf
-
 from keras import layers
 from keras import losses
 
 print(tf.__version__)
+
+# Program purpose: Train a binary classifier to perform sentiment analysis on an IMDB dataset.
 
 
 def log(msg):
@@ -44,7 +47,7 @@ workspace_dir = os.path.dirname(dataset)
 # but this is likely. Would be good to positively clarify. Scripts might not always be invoked from the assumed
 # CWD and/or workspace_dir. Some assumptions on relative locations should eventually be pinned down to standard and
 # consistent locations for more robust code.
-# UPDATE: Notice that cache_dir is specified as "." and this is also what
+# UPDATE: Notice that cache_dir is specified as "." and this is also the value of workspace_dir.
 log(f"workspace_dir: {workspace_dir}")
 
 dataset_dir = os.path.join(workspace_dir, 'aclImdb')
@@ -90,7 +93,8 @@ log(f"RAW TRAINING\n")
 batch_size = 32
 seed = 42
 
-raw_train_dataset = tf.keras.utils.text_dataset_from_directory(
+# https://www.tensorflow.org/api_docs/python/tf/keras/utils/text_dataset_from_directory
+raw_training_dataset = tf.keras.utils.text_dataset_from_directory(
     'aclImdb/train',
     batch_size=batch_size,
     validation_split=0.2,
@@ -98,16 +102,19 @@ raw_train_dataset = tf.keras.utils.text_dataset_from_directory(
     seed=seed)
 
 print(f"#####]    Sample of 5:\n")
-for text_batch, label_batch in raw_train_dataset.take(1):
+for text_batch, label_batch in raw_training_dataset.take(1):
     for i in range(5):
         print("Review", text_batch.numpy()[i])
         print("Label", label_batch.numpy()[i])
 
-print("Label 0 corresponds to", raw_train_dataset.class_names[0])
-print("Label 1 corresponds to", raw_train_dataset.class_names[1])
+print("Label 0 corresponds to", raw_training_dataset.class_names[0])
+print("Label 1 corresponds to", raw_training_dataset.class_names[1])
 
 log(f"raw validation dataset from directory\n")
 
+# Uses data from the /train/ subdir because we are letting Keras manage the 0.2 splitting of train vs/ validation data.
+# In other cases, the validation data might already be in a separate directory, but not in this case. This is the
+# purpose of the validation_split option.
 raw_validation_dataset = tf.keras.utils.text_dataset_from_directory(
     'aclImdb/train',
     batch_size=batch_size,
@@ -125,6 +132,8 @@ raw_test_dataset = tf.keras.utils.text_dataset_from_directory(
 log(f"CUSTOM STANDARDIZATION\n")
 
 
+# This custom_standardization() function appears to be a callback which will be applied to each item of input text
+# individually.
 def custom_standardization(input_data):
     lowercase = tf.strings.lower(input_data)
     stripped_html = tf.strings.regex_replace(lowercase, '<br />', ' ')
@@ -141,7 +150,7 @@ vectorize_layer = layers.TextVectorization(
     output_sequence_length=sequence_length)
 
 # Make a text-only dataset (without labels), then call adapt
-train_text = raw_train_dataset.map(lambda x, y: x)
+train_text = raw_training_dataset.map(lambda x, y: x)
 vectorize_layer.adapt(train_text)
 
 
@@ -151,23 +160,23 @@ def vectorize_text(text, label):
 
 
 # retrieve a batch (of 32 reviews and labels) from the dataset
-text_batch, label_batch = next(iter(raw_train_dataset))
+text_batch, label_batch = next(iter(raw_training_dataset))
 first_review, first_label = text_batch[0], label_batch[0]
 print("Review", first_review)
-print("Label", raw_train_dataset.class_names[first_label])
+print("Label", raw_training_dataset.class_names[first_label])
 print("Vectorized review", vectorize_text(first_review, first_label))
 
-print("1787 ---> ",vectorize_layer.get_vocabulary()[1787])
-print("2601 ---> ",vectorize_layer.get_vocabulary()[2601])
+print("1787 ---> ", vectorize_layer.get_vocabulary()[1787])
+print("2601 ---> ", vectorize_layer.get_vocabulary()[2601])
 print('Vocabulary size: {}'.format(len(vectorize_layer.get_vocabulary())))
 
-train_ds = raw_train_dataset.map(vectorize_text)
+training_dataset = raw_training_dataset.map(vectorize_text)
 val_ds = raw_validation_dataset.map(vectorize_text)
 test_ds = raw_test_dataset.map(vectorize_text)
 
 AUTOTUNE = tf.data.AUTOTUNE
 
-train_ds = train_ds.cache().prefetch(buffer_size=AUTOTUNE)
+training_dataset = training_dataset.cache().prefetch(buffer_size=AUTOTUNE)
 val_ds = val_ds.cache().prefetch(buffer_size=AUTOTUNE)
 test_ds = test_ds.cache().prefetch(buffer_size=AUTOTUNE)
 
@@ -188,7 +197,7 @@ model.compile(loss=losses.BinaryCrossentropy(from_logits=True),
 
 epochs = 10
 history = model.fit(
-    train_ds,
+    training_dataset,
     validation_data=val_ds,
     epochs=epochs)
 
