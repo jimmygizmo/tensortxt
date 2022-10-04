@@ -64,12 +64,13 @@ else:
     log(f"Downloading raw dataset .tar.gz file from: {DATASET_URL}")
     # Generate a tf.data.Dataset object from text files in a directory.
     # https://www.tensorflow.org/api_docs/python/tf/keras/utils/get_file
-    dataset_dir = tf.keras.utils.get_file("aclImdb_v1",
-                                          DATASET_URL,
-                                          untar=True,
-                                          cache_dir='.',
-                                          cache_subdir=''
-                                          )
+    returned_dataset_dir = tf.keras.utils.get_file("aclImdb_v1",
+                                                   DATASET_URL,
+                                                   untar=True,
+                                                   cache_dir='.',
+                                                   cache_subdir=''
+                                                   )
+    dataset_dir = Path(returned_dataset_dir)
     # NOTE: cache_dir will default to "~/.keras" if not specified.
     log(f"Removing unsupported data from the raw dataset.")
     remove_dir = os.path.join(training_dir, "unsup")
