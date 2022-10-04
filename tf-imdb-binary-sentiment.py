@@ -20,6 +20,9 @@ import pprint
 # standard Python environment and enhanced for clarity, learning and reusability.
 # https://www.tensorflow.org/tutorials/keras/text_classification
 
+WORKSPACE_DIRECTORY = "."
+DATASET_URL = "https://ai.stanford.edu/~amaas/data/sentiment/aclImdb_v1.tar.gz"
+
 pp = pprint.PrettyPrinter(indent=4)
 
 
@@ -41,33 +44,44 @@ log(f"Tensorflow version: {tf.__version__}  -  Keras version: {tf.keras.__versio
 
 log_phase(f"PHASE 1:  Download raw data. Inspect directory format and a sample text file.")
 
-url = "https://ai.stanford.edu/~amaas/data/sentiment/aclImdb_v1.tar.gz"
-log(f"getting dataset .tar.gz file from: {url}")
+workspace_dir = Path(WORKSPACE_DIRECTORY)
 
-# Generate a tf.data.Dataset object from text files in a directory.
-# https://www.tensorflow.org/api_docs/python/tf/keras/utils/get_file
-dataset = tf.keras.utils.get_file("aclImdb_v1",
-                                  url,
-                                  untar=True,
-                                  cache_dir='.',
-                                  cache_subdir=''
-                                  )
-# NOTE: cache_dir will default to "~/.keras" if not specified.
-
-log(f"Lets have a quick look at the directory structures and one of the text files:")
-workspace_dir = Path(dataset).parent  # Same as the cache_dir argument to get_file above.
-log(f"workspace_dir: {workspace_dir}")
-
-# dataset_dir = os.path.join(workspace_dir, "aclImdb")
 dataset_dir = Path(workspace_dir) / "aclImdb"
 log(f"dataset_dir: {dataset_dir}")
-log(f"dataset_dir listing:\n{pp.pformat(list(dataset_dir.iterdir()))}")
 
+workspace_dir = Path(dataset_dir).parent  # Same as the cache_dir argument to get_file below.
+log(f"workspace_dir: {workspace_dir}")
 
-# training_dir = os.path.join(dataset_dir, "train")
 training_dir = Path(dataset_dir) / "train"
 log(f"training_dir: {training_dir}")
+
+testing_dir = Path(dataset_dir) / "test"
+log(f"testing_dir: {testing_dir}")
+
+if dataset_dir.exists() and dataset_dir.is_dir():  # TODO: Seems like .exists() is redundant.
+    log(f"* Raw dataset will not be downloaded. It appears you have already downloaded it.")
+else:
+    log(f"Downloading raw dataset .tar.gz file from: {DATASET_URL}")
+    # Generate a tf.data.Dataset object from text files in a directory.
+    # https://www.tensorflow.org/api_docs/python/tf/keras/utils/get_file
+    dataset_dir = tf.keras.utils.get_file("aclImdb_v1",
+                                          DATASET_URL,
+                                          untar=True,
+                                          cache_dir='.',
+                                          cache_subdir=''
+                                          )
+    # NOTE: cache_dir will default to "~/.keras" if not specified.
+    log(f"Removing unsupported data from the raw dataset.")
+    remove_dir = os.path.join(training_dir, "unsup")
+    shutil.rmtree(remove_dir)
+
+log(f"Lets have a quick look at the directory structures and one of the text files:")
+
+log(f"dataset_dir listing:\n{pp.pformat(list(dataset_dir.iterdir()))}")
+
 log(f"training_dir listing:\n{pp.pformat(list(training_dir.iterdir()))}")
+
+log(f"testing_dir listing:\n{pp.pformat(list(testing_dir.iterdir()))}")
 
 
 # sample_file = os.path.join(training_dir, "pos/1181_9.txt")
@@ -88,16 +102,6 @@ main_directory/
 ......b_text_1.txt
 ......b_text_2.txt
 """)
-
-# This will error on the second try because no such dir will be found.
-# Can do this only once after unpacking source data.
-log(f"Removing unsupported data from the raw dataset.")
-# TODO: Add an existence check or use a lib that doesn't care. (pathlib?)
-# Ideally we would download the data set once, remove this stuff once and then do training repeatedly. The original
-# code was a one-time Collab from TF docs, and it is still being adapted to something more reusable and robust.
-remove_dir = os.path.join(training_dir, "unsup")
-shutil.rmtree(remove_dir)
-
 
 log_phase(f"PHASE 2:  Create datasets.")
 
@@ -130,7 +134,7 @@ log(f"Create RAW VALIDATION DATASET from directory of text files")
 # In other cases, the validation data might already be in a separate directory, but not in this case. This is the
 # purpose of the validation_split option.
 raw_validation_dataset = tf.keras.utils.text_dataset_from_directory(
-    "aclImdb/train",
+    training_dir,
     batch_size=batch_size,
     validation_split=0.2,
     subset="validation",
@@ -139,7 +143,7 @@ raw_validation_dataset = tf.keras.utils.text_dataset_from_directory(
 log(f"Create RAW TEST DATASET from directory of text files")
 
 raw_test_dataset = tf.keras.utils.text_dataset_from_directory(
-    "aclImdb/test",
+    testing_dir,
     batch_size=batch_size)
 
 
@@ -309,5 +313,5 @@ result = export_model.predict(examples)
 log(f"Array of examples:\n{pp.pformat(examples)}")
 log(f"Array of corresponding model-predicted binary sentiment scores 0 -> 1  neg -> pos:\n{pp.pformat(result)}")
 
-log_phase(f"PROJECT:  SENTIMENT ANALYSIS TENSORFLOW/KERAS DEMONSTRATION COMPLETE.  Exiting.\n")
+log_phase(f"PROJECT:  SENTIMENT ANALYSIS TENSORFLOW/KERAS DEMONSTRATION COMPLETE.  Exiting.")
 
