@@ -1,4 +1,6 @@
 #! /usr/bin/env python
+# git@github.com:jimmygizmo/tensortxt/tf-imdb-binary-sentiment.py
+# Version 1.0.0
 
 import matplotlib.pyplot as plt
 from pathlib import Path
@@ -45,12 +47,10 @@ log(f"Tensorflow version: {tf.__version__}  -  Keras version: {tf.keras.__versio
 log_phase(f"PHASE 1:  Download raw data. Inspect directory format and a sample text file.")
 
 workspace_dir = Path(WORKSPACE_DIRECTORY)
+log(f"workspace_dir: {workspace_dir}")
 
 dataset_dir = Path(workspace_dir) / "aclImdb"
 log(f"dataset_dir: {dataset_dir}")
-
-workspace_dir = Path(dataset_dir).parent  # Same as the cache_dir argument to get_file below.
-log(f"workspace_dir: {workspace_dir}")
 
 training_dir = Path(dataset_dir) / "train"
 log(f"training_dir: {training_dir}")
@@ -64,7 +64,7 @@ else:
     log(f"Downloading raw dataset .tar.gz file from: {DATASET_URL}")
     # Generate a tf.data.Dataset object from text files in a directory.
     # https://www.tensorflow.org/api_docs/python/tf/keras/utils/get_file
-    returned_dataset_dir = tf.keras.utils.get_file("aclImdb_v1",
+    returned_dataset_dir = tf.keras.utils.get_file("aclImdb",
                                                    DATASET_URL,
                                                    untar=True,
                                                    cache_dir='.',
@@ -82,8 +82,12 @@ else:
     # we could have used dataset.__string__ in effect, perhaps.
     # My point is .. I am trying out Path() and considering abndoning os.path except for high performance tight loops.
     # At this point I am not sure I like using Path() and it might cause more problems than it is worth.
-    # My reaction about overriding the / operator for this is wrong. I don't know if I will come to view that as good.
-    # The jury is still out on pathlib.
+    # My reaction about overriding the / operator for this is that I don't like it. I don't know if I will come to
+    # view this idea as good. It seems like it is best to leave the division operator / alone. This is not solving
+    # some critical problem and I don't really like the look of the cute (bad) syntax.
+    # The jury is still out on pathlib. Maybe if we could do something other than the / override for the simple
+    # concatenation tasks.
+
 
     dataset_dir = Path(returned_dataset_dir)
     # NOTE: cache_dir will default to "~/.keras" if not specified.

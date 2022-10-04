@@ -30,3 +30,5 @@ I have some tensorflow hardware warning/notices I would also like to suppress.
 
 General warning/error suppression?
 
+matplotlib has been put back to use the latest version.
+
