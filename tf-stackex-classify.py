@@ -86,14 +86,13 @@ else:
     # stems from how we had to move variables around in order to have the conditional download, and because we are
     # using Path() now and not just os.path/strings which in this case forced us to change to object, when otherwise
     # we could have used dataset.__string__ in effect, perhaps.
-    # My point is .. I am trying out Path() and considering abndoning os.path except for high performance tight loops.
+    # My point is .. I am trying out Path() and considering abandoning os.path except for high performance tight loops.
     # At this point I am not sure I like using Path() and it might cause more problems than it is worth.
     # My reaction about overriding the / operator for this is that I don't like it. I don't know if I will come to
     # view this idea as good. It seems like it is best to leave the division operator / alone. This is not solving
     # some critical problem and I don't really like the look of the cute (bad) syntax.
     # The jury is still out on pathlib. Maybe if we could do something other than the / override for the simple
     # concatenation tasks.
-
 
     dataset_dir = Path(returned_dataset_dir)
     # NOTE: cache_dir will default to "~/.keras" if not specified.
@@ -142,6 +141,7 @@ log(f"Create RAW TRAINING DATASET from directory of text files.")
 batch_size = 32
 seed = 42
 
+# TODO: THIS DIR PATH SHOULD NOT BE HARDCODED.
 # https://www.tensorflow.org/api_docs/python/tf/keras/utils/text_dataset_from_directory
 raw_training_dataset = tf.keras.utils.text_dataset_from_directory(
     "aclImdb/train",
@@ -266,15 +266,15 @@ model.summary()
 # class are integers (in this case, they can be 0, 1, 2, or 3). In addition,
 # change the metrics to metrics=['accuracy'], since this is a multi-class classification problem
 # (tf.metrics.BinaryAccuracy is only used for binary classifiers).
-
-log(f"Compile the model.")
+log(f"Compile the INITIAL MODEL.  Multi-Category Classification.")
+log(f"SPECS: losses.SparseCategoricalCrossentropy(from_logits=True), metrics=['accuracy']")
 model.compile(
     loss=losses.SparseCategoricalCrossentropy(from_logits=True),
     optimizer="adam",
     metrics=['accuracy']
 )
 
-log(f"Fit the model. Fitting the model is the primary and most intensive part of training.")
+log(f"Fit the INITIAL MODEL. Fitting the model is the primary and most intensive part of training.")
 epochs = 10
 history = model.fit(
     training_dataset,
@@ -346,9 +346,10 @@ export_model = tf.keras.Sequential([
 # We had to do this above, but obviously these changes are also needed down here in PHASE 5 for
 # multi-category classification, vs. binary.
 # Use: tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
+# BUT - THE LOGITS FLAG SHOULD BE FALSE IN MY BEST ESTIMATION. THIS IS THE PATTERN I SEE FOR BINARY.
 # Use: metrics=["accuracy"]
 
-log(f"Compile the EXPORT MODEL. Multi-Category Classification.")
+log(f"Compile the EXPORT MODEL.  Multi-Category Classification.")
 # TODO: THIS IS EXPORT MODEL - NOT SURE WE WANT LOGITS = TRUE. MIGHT WANT LOGITS = FALSE FOR EXPORTS. I'm learning.
 #   IT IS FALSE FOR THE BINARY EXPORT, WHILE TRUE FOR BINARY INITIAL. IF SAME PATTERN APPLIES, IT WILL BE FALSE HERE.
 log(f"SPECS: losses.SparseCategoricalCrossentropy(from_logits=????????), metrics=['accuracy']")

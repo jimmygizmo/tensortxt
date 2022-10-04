@@ -64,7 +64,7 @@ else:
     log(f"Downloading raw dataset .tar.gz file from: {DATASET_URL}")
     # Generate a tf.data.Dataset object from text files in a directory.
     # https://www.tensorflow.org/api_docs/python/tf/keras/utils/get_file
-    returned_dataset_dir = tf.keras.utils.get_file("aclImdb",
+    returned_dataset_dir = tf.keras.utils.get_file(dataset_dir,
                                                    DATASET_URL,
                                                    untar=True,
                                                    cache_dir='.',
@@ -80,7 +80,7 @@ else:
     # stems from how we had to move variables around in order to have the conditional download, and because we are
     # using Path() now and not just os.path/strings which in this case forced us to change to object, when otherwise
     # we could have used dataset.__string__ in effect, perhaps.
-    # My point is .. I am trying out Path() and considering abndoning os.path except for high performance tight loops.
+    # My point is .. I am trying out Path() and considering abandoning os.path except for high performance tight loops.
     # At this point I am not sure I like using Path() and it might cause more problems than it is worth.
     # My reaction about overriding the / operator for this is that I don't like it. I don't know if I will come to
     # view this idea as good. It seems like it is best to leave the division operator / alone. This is not solving
@@ -131,7 +131,7 @@ seed = 42
 
 # https://www.tensorflow.org/api_docs/python/tf/keras/utils/text_dataset_from_directory
 raw_training_dataset = tf.keras.utils.text_dataset_from_directory(
-    "aclImdb/train",
+    training_dir,
     batch_size=batch_size,
     validation_split=0.2,
     subset="training",
@@ -252,7 +252,7 @@ model.compile(
     metrics=tf.metrics.BinaryAccuracy(threshold=0.0)
 )
 
-log(f"Fit the INITIAL model. Fitting the model is the primary and most intensive part of training.")
+log(f"Fit the INITIAL MODEL. Fitting the model is the primary and most intensive part of training.")
 epochs = 10
 history = model.fit(
     training_dataset,
@@ -319,7 +319,7 @@ export_model = tf.keras.Sequential([
 ])
 
 
-log(f"Compile the EXPORT MODEL. Binary Sentiment Analysis.")
+log(f"Compile the EXPORT MODEL.  Binary Sentiment Analysis.")
 log(f"SPECS: losses.BinaryCrossentropy(from_logits=False), metrics=['accuracy']")
 # TODO: NOTE: logits setting is True for the compile of INITIAL MODEL and False for the compile of the EXPORT MODEL.
 # TODO: LEARN ABOUT THIS LOGITS SETTING THOROUGHLY, DOCUMENT IT IN THIS PROJECT. IS THIS A GENERAL PATTERN?
