@@ -70,6 +70,21 @@ else:
                                                    cache_dir='.',
                                                    cache_subdir=''
                                                    )
+    # TODO: REALLY need to clarify what object is returned. We are treating it as a string a lot but
+    #   later, similar ones are obviously much more.
+    # NOT-A-BUG, but we got lucky. Here we might just be turning a dataset object into a Path object but we get
+    # away with because in this one case, we don't use the dataset for anything else except downloading and
+    # untarring? I think our path operations work on it possibly because the dataset object must have a .__string__
+    # method (or equiv) so that Path() can coerce it into a Path, and then it works as a dir path, but we could no
+    # longer use it's many dataset features (I suspect.) This all needs to be understood. The conundrum sort of
+    # stems from how we had to move variables around in order to have the conditional download, and because we are
+    # using Path() now and not just os.path/strings which in this case forced us to change to object, when otherwise
+    # we could have used dataset.__string__ in effect, perhaps.
+    # My point is .. I am trying out Path() and considering abndoning os.path except for high performance tight loops.
+    # At this point I am not sure I like using Path() and it might cause more problems than it is worth.
+    # My reaction about overriding the / operator for this is wrong. I don't know if I will come to view that as good.
+    # The jury is still out on pathlib.
+
     dataset_dir = Path(returned_dataset_dir)
     # NOTE: cache_dir will default to "~/.keras" if not specified.
     log(f"Removing unsupported data from the raw dataset.")
@@ -149,9 +164,9 @@ raw_test_dataset = tf.keras.utils.text_dataset_from_directory(
 
 
 log_phase(f"PHASE 3:  Prepare datasets. Custom standardization, tokenization, vectorization.")
-# 1. Lower-case, strip <br /> tags and regex-style-escape punctuation.
-# 2. split up words
-# 3. convert to numbers
+# 1. Lower-case, strip <br /> tags and regex-style-escape punctuation. (standardization)
+# 2. split up words (tokenization)
+# 3. convert to numbers (vectorization)
 
 
 # This custom_standardization() function appears to be a callback which will be applied to each item of input text
