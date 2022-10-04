@@ -1,0 +1,24 @@
+I think it happens when then .plot() method is called on the plot.
+
+[####]    ----  PHASE 4:  History plots.  ----
+
+
+[####]    PLOT: Training Loss, Validation Loss
+/Users/bilbo/GITREPOS/tensortxt/./tf-imdb-binary-sentiment.py:248: MatplotlibDeprecationWarning:
+The resize_event function was deprecated in Matplotlib 3.6 and will be removed two minor releases later.
+Use callbacks.process('resize_event', ResizeEvent(...)) instead.
+  plt.plot(epochs, loss, "bo", label="Training loss")
+
+[####]    PLOT: Training Accuracy, Validation Accuracy
+/Users/bilbo/GITREPOS/tensortxt/./tf-imdb-binary-sentiment.py:261: MatplotlibDeprecationWarning:
+The resize_event function was deprecated in Matplotlib 3.6 and will be removed two minor releases later.
+Use callbacks.process('resize_event', ResizeEvent(...)) instead.
+
+SOLUTION:
+Try matplotlib==3.5.3
+this is the newest version before 3.6.0 where the warning came in.
+we dont use many features so this should be fine. testing now.
+
+Pinning this version in requirements.txt, which is the only time we pin there, when we need to force an older
+version for some specific reason like this.
+
