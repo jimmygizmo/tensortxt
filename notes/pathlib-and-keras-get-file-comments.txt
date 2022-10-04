@@ -1,0 +1,32 @@
+RE: get_file
+
+    # TODO: REALLY need to clarify what object is returned. We are treating it as a string a lot but
+    #   later, similar ones are obviously much more.
+    # NOT-A-BUG, but we got lucky. Here we might just be turning a dataset object into a Path object but we get
+    # away with because in this one case, we don't use the dataset for anything else except downloading and
+    # untarring? I think our path operations work on it possibly because the dataset object must have a .__string__
+    # method (or equiv) so that Path() can coerce it into a Path, and then it works as a dir path, but we could no
+    # longer use it's many dataset features (I suspect.) This all needs to be understood. The conundrum sort of
+    # stems from how we had to move variables around in order to have the conditional download, and because we are
+    # using Path() now and not just os.path/strings which in this case forced us to change to object, when otherwise
+    # we could have used dataset.__string__ in effect, perhaps.
+    # My point is .. I am trying out Path() and considering abandoning os.path except for high performance tight loops.
+    # At this point I am not sure I like using Path() and it might cause more problems than it is worth.
+    # My reaction about overriding the / operator for this is that I don't like it. I don't know if I will come to
+    # view this idea as good. It seems like it is best to leave the division operator / alone. This is not solving
+    # some critical problem and I don't really like the look of the cute (bad) syntax.
+    # The jury is still out on pathlib. Maybe if we could do something other than the / override for the simple
+    # concatenation tasks.
+
+    UPDATE: I'm improving the situation by using the arguments to get_file correctly.
+    This code was from TF docs, but as is so common, not of a very high quality.
+    Just thrown together to run in a Collab.
+    Now I am moving it all towards code that will be reusable for serious production work.
+
+    Regarding pathlib .. still undecided. It has been getting in my way a LOT.
+    I know other contexts allow it to shine, but I might be better off using os.path.
+    If I can justify it, I am open to fully adopting pathlib, but not just because it is the latest thing.
+    I will embrace it if it makes sense.
+    OR .. I might define a context where I use pathlib and then a different one where I use os.path.
+    I would need to use it more to be able to define such contexts.
+

@@ -41,7 +41,7 @@ def log_phase(msg):
 # https://www.tensorflow.org/tutorials/keras/save_and_load#save_checkpoints_during_training
 # TODO: Doing a POC in a separate script then will adapt to this one. See: tf-save-load.py
 
-log_phase(f"PROJECT:  SENTIMENT ANALYSIS MODEL TRAINING & PREDICTION - IMDB MOVIE REVIEWS")
+log_phase(f"PROJECT:  TEXT SENTIMENT ANALYSIS MODEL TRAINING & PREDICTION - IMDB MOVIE REVIEWS")
 log(f"Tensorflow version: {tf.__version__}  -  Keras version: {tf.keras.__version__}")
 
 log_phase(f"PHASE 1:  Download raw data. Inspect directory format and a sample text file.")
@@ -49,7 +49,7 @@ log_phase(f"PHASE 1:  Download raw data. Inspect directory format and a sample t
 workspace_dir = Path(WORKSPACE_DIRECTORY)
 log(f"workspace_dir: {workspace_dir}")
 
-dataset_dir = Path(workspace_dir) / "aclImdb"
+dataset_dir = Path(workspace_dir) / "dataset-imdb"
 log(f"dataset_dir: {dataset_dir}")
 
 training_dir = Path(dataset_dir) / "train"
@@ -64,32 +64,15 @@ else:
     log(f"Downloading raw dataset .tar.gz file from: {DATASET_URL}")
     # Generate a tf.data.Dataset object from text files in a directory.
     # https://www.tensorflow.org/api_docs/python/tf/keras/utils/get_file
-    returned_dataset_dir = tf.keras.utils.get_file(dataset_dir,
-                                                   DATASET_URL,
-                                                   untar=True,
-                                                   cache_dir='.',
-                                                   cache_subdir=''
-                                                   )
-    # TODO: REALLY need to clarify what object is returned. We are treating it as a string a lot but
-    #   later, similar ones are obviously much more.
-    # NOT-A-BUG, but we got lucky. Here we might just be turning a dataset object into a Path object but we get
-    # away with because in this one case, we don't use the dataset for anything else except downloading and
-    # untarring? I think our path operations work on it possibly because the dataset object must have a .__string__
-    # method (or equiv) so that Path() can coerce it into a Path, and then it works as a dir path, but we could no
-    # longer use it's many dataset features (I suspect.) This all needs to be understood. The conundrum sort of
-    # stems from how we had to move variables around in order to have the conditional download, and because we are
-    # using Path() now and not just os.path/strings which in this case forced us to change to object, when otherwise
-    # we could have used dataset.__string__ in effect, perhaps.
-    # My point is .. I am trying out Path() and considering abandoning os.path except for high performance tight loops.
-    # At this point I am not sure I like using Path() and it might cause more problems than it is worth.
-    # My reaction about overriding the / operator for this is that I don't like it. I don't know if I will come to
-    # view this idea as good. It seems like it is best to leave the division operator / alone. This is not solving
-    # some critical problem and I don't really like the look of the cute (bad) syntax.
-    # The jury is still out on pathlib. Maybe if we could do something other than the / override for the simple
-    # concatenation tasks.
+    returned_dataset_dir = tf.keras.utils.get_file(
+        origin=DATASET_URL,
+        untar=True,
+        cache_dir=workspace_dir,
+        cache_subdir=dataset_dir
+    )
+    # NOTE: cache_dir will default to "~/.keras" if not specified.
 
     dataset_dir = Path(returned_dataset_dir)
-    # NOTE: cache_dir will default to "~/.keras" if not specified.
     log(f"Removing unsupported data from the raw dataset.")
     remove_dir = os.path.join(training_dir, "unsup")
     shutil.rmtree(remove_dir)
@@ -102,7 +85,7 @@ log(f"training_dir listing:\n{pp.pformat(list(training_dir.iterdir()))}")
 
 log(f"testing_dir listing:\n{pp.pformat(list(testing_dir.iterdir()))}")
 
-
+# TODO: This filename should not be hardcoded. At least move it to a CONFIG var.
 # sample_file = os.path.join(training_dir, "pos/1181_9.txt")
 sample_file = Path(training_dir) / "pos/1181_9.txt"
 log(f"sample file: {sample_file}")
@@ -153,6 +136,7 @@ log(f"Create RAW VALIDATION DATASET from directory of text files")
 # Uses data from the /train/ subdir because we are letting Keras manage the 0.2 splitting of train vs/ validation data.
 # In other cases, the validation data might already be in a separate directory, but not in this case. This is the
 # purpose of the validation_split option.
+# TODO: Change to using a named argument for training_dir
 raw_validation_dataset = tf.keras.utils.text_dataset_from_directory(
     training_dir,
     batch_size=batch_size,
@@ -163,6 +147,7 @@ raw_validation_dataset = tf.keras.utils.text_dataset_from_directory(
 
 log(f"Create RAW TEST DATASET from directory of text files")
 
+# TODO: Change to using a named argument for testing_dir
 raw_test_dataset = tf.keras.utils.text_dataset_from_directory(
     testing_dir,
     batch_size=batch_size
