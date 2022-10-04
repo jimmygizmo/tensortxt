@@ -1,0 +1,14 @@
+Just a curiosity which might be very relevant if Unicode ever needs to be processed.
+It looks like internally the text is being stored as bytes .. meaning like ASCII of the old days of strings.
+
+Notice the b'some text' inside the tensor object.
+
+tf.Tensor(b'Great movie - especially the music - Etta James - "At Last". This speaks volumes when you have finally
+found that special someone.', shape=(), dtype=string)
+
+If we know our input can be converted to ascii/bytes with no problem, then this is a great optimization.
+But we would need to handle Unicode or something else or something similar if it was anything more than
+ASCII bytes in the text data.
+
+I think we have to be explict in either case and make this clear everywhere.
+

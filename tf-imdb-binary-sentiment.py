@@ -11,8 +11,6 @@ from keras import layers
 from keras import losses
 import pprint
 
-print(tf.__version__)
-
 # Program purpose: Train a binary classifier to perform sentiment analysis on an IMDB dataset.
 # We will train a sentiment-analysis model to classify movie reviews as positive or negative.
 # Stanford Large Movie Review data set: https://ai.stanford.edu/%7Eamaas/data/sentiment/
@@ -22,13 +20,15 @@ print(tf.__version__)
 # standard Python environment and enhanced for clarity, learning and reusability.
 # https://www.tensorflow.org/tutorials/keras/text_classification
 
+pp = pprint.PrettyPrinter(indent=4)
+
 
 def log(msg):
     print(f"\n[####]    {msg}")
 
 
 def log_phase(msg):
-    print(f"\n[####]    ----  {msg}  ----\n")
+    print(f"\n\n[####]    ----  {msg}  ----\n")
 
 
 # TODO: IMPLEMENTING SAVING AND LOADING OF MODELS. FOLLOWING THIS:
@@ -37,6 +37,7 @@ def log_phase(msg):
 # TODO: Doing a POC in a separate script then will adapt to this one. See: tf-save-load.py
 
 log_phase(f"PROJECT:  SENTIMENT ANALYSIS MODEL TRAINING & PREDICTION - IMDB MOVIE REVIEWS")
+log(f"Tensorflow version: {tf.__version__}  -  Keras version: {tf.keras.__version__}")
 
 log_phase(f"PHASE 1:  Download raw data. Inspect directory format and a sample text file.")
 
@@ -51,26 +52,27 @@ dataset = tf.keras.utils.get_file("aclImdb_v1",
                                   cache_dir='.',
                                   cache_subdir=''
                                   )
-# NOTE: cache_dir will default to "~/.keras". TODO: Clarify why this is called the "cache" dir.
+# NOTE: cache_dir will default to "~/.keras" if not specified.
 
-# I am calling it the workspace_dir for now. Before I call it something else like cache_dir, I need more info.
-workspace_dir = os.path.dirname(dataset)
-
-log(f"Just have a quick look at the directory structures and then one of the text files.")
-
+log(f"Lets have a quick look at the directory structures and one of the text files:")
+workspace_dir = Path(dataset).parent  # Same as the cache_dir argument to get_file above.
 log(f"workspace_dir: {workspace_dir}")
 
-dataset_dir = os.path.join(workspace_dir, "aclImdb")
+# dataset_dir = os.path.join(workspace_dir, "aclImdb")
+dataset_dir = Path(workspace_dir) / "aclImdb"
 log(f"dataset_dir: {dataset_dir}")
-log(f"dataset_dir listing:\n\n{pprint.pprint(os.listdir(dataset_dir))}")
+log(f"dataset_dir listing:\n{pp.pformat(list(dataset_dir.iterdir()))}")
 
-training_dir = os.path.join(dataset_dir, "train")
+
+# training_dir = os.path.join(dataset_dir, "train")
+training_dir = Path(dataset_dir) / "train"
 log(f"training_dir: {training_dir}")
-log(f"training_dir listing:\n\n{pprint.pprint(os.listdir(training_dir))}")
+log(f"training_dir listing:\n{pp.pformat(list(training_dir.iterdir()))}")
 
 
-sample_file = os.path.join(training_dir, "pos/1181_9.txt")
-log(f"sample file: {sample_file}\n")
+# sample_file = os.path.join(training_dir, "pos/1181_9.txt")
+sample_file = Path(training_dir) / "pos/1181_9.txt"
+log(f"sample file: {sample_file}")
 
 with open(sample_file) as f:
     print(f.read())
@@ -99,7 +101,7 @@ shutil.rmtree(remove_dir)
 
 log_phase(f"PHASE 2:  Create datasets.")
 
-log(f"Create RAW TRAINING DATASET from directory of text files.\n")
+log(f"Create RAW TRAINING DATASET from directory of text files.")
 
 batch_size = 32
 seed = 42
@@ -112,7 +114,8 @@ raw_training_dataset = tf.keras.utils.text_dataset_from_directory(
     subset="training",
     seed=seed)
 
-print(f"#####]    Sample of 5:\n")
+# TODO: Is this even giving more than one?
+log(f"Sample of 5:")
 for text_batch, label_batch in raw_training_dataset.take(1):
     for i in range(5):
         print("Review", text_batch.numpy()[i])
@@ -121,7 +124,7 @@ for text_batch, label_batch in raw_training_dataset.take(1):
 print("Label 0 corresponds to", raw_training_dataset.class_names[0])
 print("Label 1 corresponds to", raw_training_dataset.class_names[1])
 
-log(f"Create RAW VALIDATION DATASET from directory of text files\n")
+log(f"Create RAW VALIDATION DATASET from directory of text files")
 
 # Uses data from the /train/ subdir because we are letting Keras manage the 0.2 splitting of train vs/ validation data.
 # In other cases, the validation data might already be in a separate directory, but not in this case. This is the
@@ -133,17 +136,17 @@ raw_validation_dataset = tf.keras.utils.text_dataset_from_directory(
     subset="validation",
     seed=seed)
 
-log(f"Create RAW TEST DATASET from directory of text files\n")
+log(f"Create RAW TEST DATASET from directory of text files")
 
 raw_test_dataset = tf.keras.utils.text_dataset_from_directory(
     "aclImdb/test",
     batch_size=batch_size)
 
 
-# Prepare dataset: standardization, tokenization, vectorization
-log(f"----  CUSTOM STANDARDIZATION, TOKENIZATION, VECTORIZATION  ----\n")
+log_phase(f"PHASE 3:  Prepare datasets. Custom standardization, tokenization, vectorization.")
 # 1. Lower-case, strip <br /> tags and regex-style-escape punctuation.
-# 2. split up words, convert to numbers)
+# 2. split up words
+# 3. convert to numbers
 
 
 # This custom_standardization() function appears to be a callback which will be applied to each item of input text
@@ -173,15 +176,20 @@ def vectorize_text(text, label):
     return vectorize_layer(text), label
 
 
+log(f"Example of the vectorized data:")
+
 # retrieve a batch (of 32 reviews and labels) from the dataset
+# ASSUMING next(iter()) will get us 32. It's up to the object's __next__ as to how many we get.
 text_batch, label_batch = next(iter(raw_training_dataset))
 first_review, first_label = text_batch[0], label_batch[0]
 print("Review", first_review)
 print("Label", raw_training_dataset.class_names[first_label])
 print("Vectorized review", vectorize_text(first_review, first_label))
 
-print("1787 ---> ", vectorize_layer.get_vocabulary()[1787])
-print("2601 ---> ", vectorize_layer.get_vocabulary()[2601])
+# Disabling these because the index changes on each run. Would need to pick the indices from the preceding output
+# of the vectorized text.
+# print("1787 ---> ", vectorize_layer.get_vocabulary()[1787])
+# print("2601 ---> ", vectorize_layer.get_vocabulary()[2601])
 print("Vocabulary size: {}".format(len(vectorize_layer.get_vocabulary())))
 
 training_dataset = raw_training_dataset.map(vectorize_text)
@@ -221,7 +229,7 @@ print("Loss: ", loss)
 print("Accuracy: ", accuracy)
 
 
-log(f"----  HISTORY PLOTS  ----\n")
+log_phase(f"PHASE 4:  Epoch history plots.")
 
 history_dict = history.history
 history_dict.keys()
@@ -234,7 +242,7 @@ val_loss = history_dict["val_loss"]
 epochs = range(1, len(acc) + 1)
 
 
-log(f"PLOT: Training Loss, Validation Loss\n")
+log(f"PLOT: Training Loss, Validation Loss")
 
 # "bo" is for "blue dot"
 plt.plot(epochs, loss, "bo", label="Training loss")
@@ -248,7 +256,7 @@ plt.legend()
 plt.show()
 
 
-log(f"PLOT: Training Accuracy, Validation Accuracy\n")
+log(f"PLOT: Training Accuracy, Validation Accuracy")
 
 plt.plot(epochs, acc, "bo", label="Training acc")
 plt.plot(epochs, val_acc, "b", label="Validation acc")
@@ -260,8 +268,10 @@ plt.legend(loc="lower right")
 plt.show()
 
 
-log_phase(f"PHASE 4: Export and test phase. Test the exported model using RAW TEST DATASET.")
+log_phase(f"PHASE 5: Export and test phase. Test the exported model using RAW TEST DATASET.")
 
+# TODO: Can this step be considered the 'export' or is the actual export a side-effect of compile, below?
+#   Is there a physical binary somewhere?
 log(f"tf.keras.Sequential groups a linear stack of layers into a tf.keras.Model.")
 log(f"vectorize_layer passed in, model passed in, layers.Activation: sigmoid. Obj name: export_model.")
 export_model = tf.keras.Sequential([
@@ -270,18 +280,18 @@ export_model = tf.keras.Sequential([
     layers.Activation("sigmoid")
 ])
 
-log(f"export_model.compile - losses.BinaryCrossentropy-non-logits, optimizer: adam")
+log(f"COMPILE: export_model.compile - losses.BinaryCrossentropy-non-logits, optimizer: adam")
 export_model.compile(
     loss=losses.BinaryCrossentropy(from_logits=False), optimizer="adam", metrics=["accuracy"]
 )
 
-log(f"export_model.evaluate raw_test_dataset")
+log(f"EVALUATE: export_model.evaluate raw_test_dataset")
 # Test it with `raw_test_dataset`, which yields raw strings
 loss, accuracy = export_model.evaluate(raw_test_dataset)
 log(f"Accuracy:\n{accuracy}")
 
 
-log_phase(f"PHASE 5:  Prediction. Running the exported model.")
+log_phase(f"PHASE 6:  Prediction. Running the exported model.")
 
 examples = [
     "The movie was great!",
@@ -296,9 +306,8 @@ log(f"Predict. Show array of review text phrases and corresponding array of mode
 result = export_model.predict(examples)
 
 # In Collab, you would see the .predict() output automatically, but here we have to explicitly print it.
-print(examples)
-print()
-print(result)
+log(f"Array of examples:\n{pp.pformat(examples)}")
+log(f"Array of corresponding model-predicted binary sentiment scores 0 -> 1  neg -> pos:\n{pp.pformat(result)}")
 
-log_phase(f"PROJECT:  SENTIMENT ANALYSIS TENSORFLOW/KERAS DEMONSTRATION COMPLETE.  Exiting.")
+log_phase(f"PROJECT:  SENTIMENT ANALYSIS TENSORFLOW/KERAS DEMONSTRATION COMPLETE.  Exiting.\n")
 
