@@ -216,11 +216,13 @@ training_dataset = raw_training_dataset.map(vectorize_text)
 validation_dataset = raw_validation_dataset.map(vectorize_text)
 test_dataset = raw_test_dataset.map(vectorize_text)
 
+# AUTOTUNE, .cache() and .prefetch() are all for maximizing performance.
 AUTOTUNE = tf.data.AUTOTUNE
-
 training_dataset = training_dataset.cache().prefetch(buffer_size=AUTOTUNE)
 validation_dataset = validation_dataset.cache().prefetch(buffer_size=AUTOTUNE)
 test_dataset = test_dataset.cache().prefetch(buffer_size=AUTOTUNE)
+
+log(f"Creating the model/neural-network.")
 
 embedding_dim = 16
 
@@ -231,18 +233,23 @@ model = tf.keras.Sequential([
   layers.Dropout(0.2),
   layers.Dense(1)])
 
+log(f"Model summary:")
 model.summary()
 
+log(f"Compile the model.")
 model.compile(loss=losses.BinaryCrossentropy(from_logits=True),
               optimizer="adam",
               metrics=tf.metrics.BinaryAccuracy(threshold=0.0))
 
+# TODO: Is this in fact the training step? When is it better the use the term "fit"?
+log(f"Train the model.")
 epochs = 10
 history = model.fit(
     training_dataset,
     validation_data=validation_dataset,
     epochs=epochs)
 
+log(f"Evaluate/test the model.")
 loss, accuracy = model.evaluate(test_dataset)
 
 print("Loss: ", loss)
@@ -322,10 +329,10 @@ examples = [
     "My kid makes better movies than this."
 ]
 
-log(f"Predict. Show array of review text phrases and corresponding array of model-predicted labels.")
+log(f"Predict. Show array of review text phrases and corresponding array of model-predicted scores.")
+log(f"0 is most negative. 1 is most positive. Less than 0.5 is negative. 0.5 or greater is positive.")
 result = export_model.predict(examples)
 
-# In Collab, you would see the .predict() output automatically, but here we have to explicitly print it.
 log(f"Array of examples:\n{pp.pformat(examples)}")
 log(f"Array of corresponding model-predicted binary sentiment scores 0 -> 1  neg -> pos:\n{pp.pformat(result)}")
 

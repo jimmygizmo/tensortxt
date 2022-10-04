@@ -22,3 +22,11 @@ we dont use many features so this should be fine. testing now.
 Pinning this version in requirements.txt, which is the only time we pin there, when we need to force an older
 version for some specific reason like this.
 
+* UPDATE: After much testing I have noticed some slightly weird behavior in the plots. They are no longer completely
+blocking but they stick on closing and the buttons are greyed out and non-functional. For this reason I might restore
+matplotlib to 3.6 and see about dealing with the deprecation warnings some other way.
+
+I have some tensorflow hardware warning/notices I would also like to suppress.
+
+General warning/error suppression?
+
