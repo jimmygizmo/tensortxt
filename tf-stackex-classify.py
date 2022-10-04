@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# git@github.com:jimmygizmo/tensortxt/tf-imdb-binary-sentiment.py
+# git@github.com:jimmygizmo/tensortxt/tf-stackex-classify.py
 # Version 1.0.0
 
 import matplotlib.pyplot as plt
@@ -13,17 +13,23 @@ from keras import layers
 from keras import losses
 import pprint
 
-# Program purpose: Train a binary classifier to perform sentiment analysis on an IMDB dataset.
-# We will train a sentiment-analysis model to classify movie reviews as positive or negative.
-# Stanford Large Movie Review data set: https://ai.stanford.edu/%7Eamaas/data/sentiment/
-# Dataset: Text of 50,000 movie reviews from IMDB. 25,000 reviews for training and 25,000 reviews for testing.
-# The training and testing sets are balanced, meaning they contain an equal number of positive and negative reviews.
-# This is a Python program based off the Collab code for the following tutorial. It has been adapted to run in a
-# standard Python environment and enhanced for clarity, learning and reusability.
+# multi-class classification on Stack Overflow questions
+# train a multi-class classifier to predict the tag of a programming question on Stack Overflow.
+
+# Program purpose: Train a multi-class classifier to predict the tag of a programming question on Stack Overflow.
+# We will train a xxxxxxxxxxx model to classify xxxxxx as xxxxxxxxxxxxxxx.
+# xxxxxxxxx data set: https://ai.stanford.edu/%7Eamaas/data/sentiment/
+# Dataset: A small subset of thousands of questions out of the 1.7 million post BigQuery version:
+# https://console.cloud.google.com/marketplace/details/stack-exchange/stack-overflow?pli=1&project=atomonova01
+# Occurrences of the language/category words have been replaced with "blank" in the data to increase the challenge
+# since many questions do contain that string. The challenge would not be interesting if those were left in.
+# This is a variation of the following tutorial, described at the end. This code was inspired by the original tutorial
+# code which was intended for Collab. I am only making a standalone version of this challenge and not a Collab version.
+# The code in this repository has evolved quite a bit from the original.
 # https://www.tensorflow.org/tutorials/keras/text_classification
 
 WORKSPACE_DIRECTORY = "."
-DATASET_URL = "https://ai.stanford.edu/~amaas/data/sentiment/aclImdb_v1.tar.gz"
+DATASET_URL = "https://storage.googleapis.com/download.tensorflow.org/data/stack_overflow_16k.tar.gz"
 
 pp = pprint.PrettyPrinter(indent=4)
 
@@ -41,7 +47,7 @@ def log_phase(msg):
 # https://www.tensorflow.org/tutorials/keras/save_and_load#save_checkpoints_during_training
 # TODO: Doing a POC in a separate script then will adapt to this one. See: tf-save-load.py
 
-log_phase(f"PROJECT:  SENTIMENT ANALYSIS MODEL TRAINING & PREDICTION - IMDB MOVIE REVIEWS")
+log_phase(f"PROJECT:  xxxxxxxxx MODEL TRAINING & PREDICTION - xxxxxxx")
 log(f"Tensorflow version: {tf.__version__}  -  Keras version: {tf.keras.__version__}")
 
 log_phase(f"PHASE 1:  Download raw data. Inspect directory format and a sample text file.")
@@ -88,6 +94,7 @@ else:
     # The jury is still out on pathlib. Maybe if we could do something other than the / override for the simple
     # concatenation tasks.
 
+
     dataset_dir = Path(returned_dataset_dir)
     # NOTE: cache_dir will default to "~/.keras" if not specified.
     log(f"Removing unsupported data from the raw dataset.")
@@ -113,13 +120,19 @@ with open(sample_file) as f:
 print("""
 Expected directory structure:
 
-main_directory/
-...class_a/
-......a_text_1.txt
-......a_text_2.txt
-...class_b/
-......b_text_1.txt
-......b_text_2.txt
+train/
+...python/
+......0.txt
+......1.txt
+...javascript/
+......0.txt
+......1.txt
+...csharp/
+......0.txt
+......1.txt
+...java/
+......0.txt
+......1.txt
 """)
 
 log_phase(f"PHASE 2:  Create datasets.")
@@ -233,26 +246,35 @@ log(f"Creating the model/neural-network.")
 
 embedding_dim = 16
 
+# NOTE regarding .Dense(XXXX) change when going from binary sentiment with 2 classes to 4 class tagging/classification.
+# For binary sentiment analysis done in this project (tf-imdb-binary-sentiment.py): Dense(1)
+# For the current classification project with 4 classes instead of just 2: Dense(4)
 model = tf.keras.Sequential([
     layers.Embedding(max_features + 1, embedding_dim),
     layers.Dropout(0.2),
     layers.GlobalAveragePooling1D(),
     layers.Dropout(0.2),
-    layers.Dense(1)
+    layers.Dense(4)
 ])
 
 log(f"Model summary:")
 model.summary()
 
-log(f"Compile the INITIAL MODEL.  Binary Sentiment Analysis.")
-log(f"SPECS: losses.BinaryCrossentropy(from_logits=True), metrics=tf.metrics.BinaryAccuracy(threshold=0.0)")
+# NOTE on compilation changes going from 2 class binary sentiment analysis to 4 class classification:
+# When compiling the model, change the loss to tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True).
+# This is the correct loss function to use for a multi-class classification problem, when the labels for each
+# class are integers (in this case, they can be 0, 1, 2, or 3). In addition,
+# change the metrics to metrics=['accuracy'], since this is a multi-class classification problem
+# (tf.metrics.BinaryAccuracy is only used for binary classifiers).
+
+log(f"Compile the model.")
 model.compile(
-    loss=losses.BinaryCrossentropy(from_logits=True),
+    loss=losses.SparseCategoricalCrossentropy(from_logits=True),
     optimizer="adam",
-    metrics=tf.metrics.BinaryAccuracy(threshold=0.0)
+    metrics=['accuracy']
 )
 
-log(f"Fit the INITIAL model. Fitting the model is the primary and most intensive part of training.")
+log(f"Fit the model. Fitting the model is the primary and most intensive part of training.")
 epochs = 10
 history = model.fit(
     training_dataset,
@@ -268,12 +290,14 @@ print("Accuracy: ", accuracy)
 
 
 log_phase(f"PHASE 4:  Epoch history plots.")
+# NOTE about change from binary to 4 classes: When plotting accuracy over time,
+# change binary_accuracy and val_binary_accuracy to accuracy and val_accuracy, respectively.
 
 history_dict = history.history
 history_dict.keys()
 
-acc = history_dict["binary_accuracy"]
-val_acc = history_dict["val_binary_accuracy"]
+acc = history_dict["accuracy"]
+val_acc = history_dict["val_accuracy"]
 loss = history_dict["loss"]
 val_loss = history_dict["val_loss"]
 
@@ -318,13 +342,19 @@ export_model = tf.keras.Sequential([
     layers.Activation("sigmoid")
 ])
 
+# NOTE - Changes not exactly specified in the end of page instructions for this variant.
+# We had to do this above, but obviously these changes are also needed down here in PHASE 5 for
+# multi-category classification, vs. binary.
+# Use: tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
+# Use: metrics=["accuracy"]
 
-log(f"Compile the EXPORT MODEL. Binary Sentiment Analysis.")
-log(f"SPECS: losses.BinaryCrossentropy(from_logits=False), metrics=['accuracy']")
-# TODO: NOTE: logits setting is True for the compile of INITIAL MODEL and False for the compile of the EXPORT MODEL.
-# TODO: LEARN ABOUT THIS LOGITS SETTING THOROUGHLY, DOCUMENT IT IN THIS PROJECT. IS THIS A GENERAL PATTERN?
+log(f"Compile the EXPORT MODEL. Multi-Category Classification.")
+# TODO: THIS IS EXPORT MODEL - NOT SURE WE WANT LOGITS = TRUE. MIGHT WANT LOGITS = FALSE FOR EXPORTS. I'm learning.
+#   IT IS FALSE FOR THE BINARY EXPORT, WHILE TRUE FOR BINARY INITIAL. IF SAME PATTERN APPLIES, IT WILL BE FALSE HERE.
+log(f"SPECS: losses.SparseCategoricalCrossentropy(from_logits=????????), metrics=['accuracy']")
+# TODO: LEARN ABOUT THIS LOGITS SETTING THOROUGHLY, DOCUMENT IT IN THIS PROJECT.
 export_model.compile(
-    loss=losses.BinaryCrossentropy(from_logits=False),
+    loss=losses.SparseCategoricalCrossentropy(from_logits=False),
     optimizer="adam",
     metrics=["accuracy"]
 )
