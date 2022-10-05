@@ -17,8 +17,9 @@ import pprint
 # train a multi-class classifier to predict the tag of a programming question on Stack Overflow.
 
 # Program purpose: Train a multi-class classifier to predict the tag of a programming question on Stack Overflow.
-# We will train a xxxxxxxxxxx model to classify xxxxxx as xxxxxxxxxxxxxxx.
-# xxxxxxxxx data set: https://ai.stanford.edu/%7Eamaas/data/sentiment/
+# We will train a multi-category classification model to classify StackExchange posts as being for one of
+# four languages: python, javascript, csharp, java.
+# xxxxx NAME xxxx data set: xxxxxx URL xxxxx
 # Dataset: A small subset of thousands of questions out of the 1.7 million post BigQuery version:
 # https://console.cloud.google.com/marketplace/details/stack-exchange/stack-overflow?pli=1&project=atomonova01
 # Occurrences of the language/category words have been replaced with "blank" in the data to increase the challenge
@@ -42,11 +43,6 @@ def log_phase(msg):
     print(f"\n\n[####]    ----  {msg}  ----\n")
 
 
-# TODO: IMPLEMENTING SAVING AND LOADING OF MODELS. FOLLOWING THIS:
-# https://www.tensorflow.org/tutorials/keras/save_and_load
-# https://www.tensorflow.org/tutorials/keras/save_and_load#save_checkpoints_during_training
-# TODO: Doing a POC in a separate script then will adapt to this one. See: tf-save-load.py
-
 log_phase(f"PROJECT:  TEXT TAGGING/MULTI-CATEGORIZATION MODEL TRAINING & PREDICTION - STACKEXCHANGE POSTS")
 log(f"Tensorflow version: {tf.__version__}  -  Keras version: {tf.keras.__version__}")
 
@@ -58,11 +54,7 @@ log(f"workspace_dir: {workspace_dir}")
 dataset_dir = Path(workspace_dir) / "dataset-stackex"
 log(f"dataset_dir: {dataset_dir}")
 
-training_dir = Path(dataset_dir) / "train"
-log(f"training_dir: {training_dir}")
-
-testing_dir = Path(dataset_dir) / "test"
-log(f"testing_dir: {testing_dir}")
+untar_dir_says_get_file = None  # This will be set via tf.keras.utils.get_file()
 
 if dataset_dir.exists() and dataset_dir.is_dir():  # TODO: Seems like .exists() is redundant.
     log(f"* Raw dataset will not be downloaded. It appears you have already downloaded it.")
@@ -70,19 +62,22 @@ else:
     log(f"Downloading raw dataset .tar.gz file from: {DATASET_URL}")
     # Generate a tf.data.Dataset object from text files in a directory.
     # https://www.tensorflow.org/api_docs/python/tf/keras/utils/get_file
-    returned_dataset_dir = tf.keras.utils.get_file(
+    ignore_this_returned_path = tf.keras.utils.get_file(
         origin=DATASET_URL,
         untar=True,
         cache_dir=workspace_dir,
         cache_subdir=dataset_dir
     )
+    log(f"* * * * * * DEBUG * * * * * *: returned_dataset_dir: {untar_dir_says_get_file}")
     # NOTE: cache_dir will default to "~/.keras" if not specified.
 
-    # MULTI-CAT CHANGE. No cleanup like this needed for StackExchange data.
-    # dataset_dir = Path(returned_dataset_dir)
-    # log(f"Removing unsupported data from the raw dataset.")
-    # remove_dir = os.path.join(training_dir, "unsup")
-    # shutil.rmtree(remove_dir)
+
+training_dir = Path(dataset_dir) / "train"
+log(f"training_dir: {training_dir}")
+
+testing_dir = Path(dataset_dir) / "test"
+log(f"testing_dir: {testing_dir}")
+
 
 log(f"Lets have a quick look at the directory structures and one of the text files:")
 
@@ -355,20 +350,20 @@ log(f"Accuracy:\n{accuracy}")
 log_phase(f"PHASE 6:  Prediction. Running the exported model.")
 
 examples = [
-    "The movie was great!",
-    "The movie was okay.",
-    "The movie was terrible.",
-    "I actually liked this film.",
-    "Hated it, hated it, HATED IT!",
-    "My kid makes better movies than this."
+    "python standard library sys os pprint",
+    "the arrow function and the event loop",
+    "the dot net engine in unity c-sharp",
+    "profile the jvm for metaclass factory",
+    "perl is still being used thanks to larry wall",
+    "I am porting from c++ to fortran"
 ]
 
 log(f"Predict. Show array of review text phrases and corresponding array of model-predicted scores.")
-log(f"0 is most negative. 1 is most positive. Less than 0.5 is negative. 0.5 or greater is positive.")
+log(f"The integers 0-3 correspond to the languages/tags/classes of python, javascript, csharp, java. ORDER??")
 result = export_model.predict(examples)
 
 log(f"Array of examples:\n{pp.pformat(examples)}")
-log(f"Array of corresponding model-predicted binary sentiment scores 0 -> 1  neg -> pos:\n{pp.pformat(result)}")
+log(f"Array of corresponding model-predicted scores 0 -> 1 for each label/class:\n{pp.pformat(result)}")
 
 log_phase(f"PROJECT:  SENTIMENT ANALYSIS TENSORFLOW/KERAS DEMONSTRATION COMPLETE.  Exiting.")
 

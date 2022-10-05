@@ -1,0 +1,5 @@
+# TODO: IMPLEMENTING SAVING AND LOADING OF MODELS. FOLLOWING THIS:
+# https://www.tensorflow.org/tutorials/keras/save_and_load
+# https://www.tensorflow.org/tutorials/keras/save_and_load#save_checkpoints_during_training
+# TODO: Doing a POC in a separate script then will adapt to this one. See: tf-save-load.py
+

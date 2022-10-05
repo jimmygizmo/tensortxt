@@ -36,11 +36,6 @@ def log_phase(msg):
     print(f"\n\n[####]    ----  {msg}  ----\n")
 
 
-# TODO: IMPLEMENTING SAVING AND LOADING OF MODELS. FOLLOWING THIS:
-# https://www.tensorflow.org/tutorials/keras/save_and_load
-# https://www.tensorflow.org/tutorials/keras/save_and_load#save_checkpoints_during_training
-# TODO: Doing a POC in a separate script then will adapt to this one. See: tf-save-load.py
-
 log_phase(f"PROJECT:  TEXT SENTIMENT ANALYSIS MODEL TRAINING & PREDICTION - IMDB MOVIE REVIEWS")
 log(f"Tensorflow version: {tf.__version__}  -  Keras version: {tf.keras.__version__}")
 
@@ -49,8 +44,29 @@ log_phase(f"PHASE 1:  Download raw data. Inspect directory format and a sample t
 workspace_dir = Path(WORKSPACE_DIRECTORY)
 log(f"workspace_dir: {workspace_dir}")
 
-dataset_dir = Path(workspace_dir) / "dataset-imdb"
-log(f"dataset_dir: {dataset_dir}")
+expected_dataset_dir = Path(workspace_dir) / "dataset-imdb"
+log(f"expected_dataset_dir: {expected_dataset_dir}")
+
+untar_dir_says_get_file = None  # This will be set via tf.keras.utils.get_file()
+
+if expected_dataset_dir.exists() and expected_dataset_dir.is_dir():  # TODO: Seems like .exists() is redundant.
+    log(f"* Raw dataset will not be downloaded. It appears you have already downloaded it.")
+    untar_dir_says_get_file = expected_dataset_dir
+else:
+    log(f"Downloading raw dataset .tar.gz file from: {DATASET_URL}")
+    # Generate a tf.data.Dataset object from text files in a directory.
+    # https://www.tensorflow.org/api_docs/python/tf/keras/utils/get_file
+    ignore_this_returned_path = tf.keras.utils.get_file(
+        origin=DATASET_URL,
+        untar=True,
+        cache_dir=workspace_dir,
+        cache_subdir=expected_dataset_dir
+    )
+    log(f"* * * * * * DEBUG * * * * * *: returned_dataset_dir: {untar_dir_says_get_file}")
+    # NOTE: cache_dir will default to "~/.keras" if not specified.
+
+
+dataset_dir = untar_dir_says_get_file
 
 training_dir = Path(dataset_dir) / "train"
 log(f"training_dir: {training_dir}")
@@ -58,24 +74,15 @@ log(f"training_dir: {training_dir}")
 testing_dir = Path(dataset_dir) / "test"
 log(f"testing_dir: {testing_dir}")
 
-if dataset_dir.exists() and dataset_dir.is_dir():  # TODO: Seems like .exists() is redundant.
-    log(f"* Raw dataset will not be downloaded. It appears you have already downloaded it.")
-else:
-    log(f"Downloading raw dataset .tar.gz file from: {DATASET_URL}")
-    # Generate a tf.data.Dataset object from text files in a directory.
-    # https://www.tensorflow.org/api_docs/python/tf/keras/utils/get_file
-    returned_dataset_dir = tf.keras.utils.get_file(
-        origin=DATASET_URL,
-        untar=True,
-        cache_dir=workspace_dir,
-        cache_subdir=dataset_dir
-    )
-    # NOTE: cache_dir will default to "~/.keras" if not specified.
 
-    dataset_dir = Path(returned_dataset_dir)
+# Cleanup of /unsup/ dir which is specific to the IMDB project only.
+# It is in its own conditional block in this location for clarity and cleaner code.
+if expected_dataset_dir.exists() and expected_dataset_dir.is_dir():
+    dataset_dir = Path(untar_dir_says_get_file)
     log(f"Removing unsupported data from the raw dataset.")
     remove_dir = os.path.join(training_dir, "unsup")
     shutil.rmtree(remove_dir)
+
 
 log(f"Lets have a quick look at the directory structures and one of the text files:")
 
