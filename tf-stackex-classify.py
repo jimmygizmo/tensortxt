@@ -132,8 +132,11 @@ for text_batch, label_batch in raw_training_dataset.take(1):
         print("Review", text_batch.numpy()[i])
         print("Label", label_batch.numpy()[i])
 
+log(f"Label mapping:")
 print("Label 0 corresponds to", raw_training_dataset.class_names[0])
 print("Label 1 corresponds to", raw_training_dataset.class_names[1])
+print("Label 2 corresponds to", raw_training_dataset.class_names[2])
+print("Label 3 corresponds to", raw_training_dataset.class_names[3])
 
 log(f"Create RAW VALIDATION DATASET from directory of text files")
 
@@ -336,13 +339,17 @@ log(f"Accuracy:\n{accuracy}")
 
 log_phase(f"PHASE 6:  Prediction. Running the exported model.")
 
+# NOTE: The following is pretty example data and the prediction on it is not very good. I just wanted something
+# to run it with. A proper test would be to take actual postings, change the language name to blank and possibly
+# organize those in another dir and write a few lines to load them and run them like we are doing with this array.
+
 examples = [
-    "python standard library sys os pprint",
-    "the arrow function and the event loop",
-    "the dot net engine in unity c-sharp",
-    "profile the jvm for metaclass factory",
-    "perl is still being used thanks to larry wall",
-    "I am porting from c++ to fortran"
+    "python standard library sys os pprint is why I tell you this is fake test data not my real question about libs",
+    "the arrow function and the event loop are very j-essy things common in jquery which make the web lovable, no?",
+    "the dot net engine in unity c-sharp gave me a bug in my game. I was using vscode and am fond of bill gates.",
+    "profile the jvm for metaclass factory so I had to run strings on my jar file to spot the problem. help!",
+    "perl is still being used thanks to larry, and you might have noticed this language is not one of our labels",
+    "I am porting from c++ to fortran so it will be interesting to see the scores of this non-label language"
 ]
 
 log(f"Predict. Show array of review text phrases and corresponding array of model-predicted scores.")
