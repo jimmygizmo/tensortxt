@@ -1,0 +1,42 @@
+REGARDING from_logits=?????
+
+AT FIRST I WAS THINKING IT SHOULD BE FALSE
+
+
+# NOTE - Changes not exactly specified in the end of page instructions for this variant.
+# We had to do this above, but obviously these changes are also needed down here in PHASE 5 for
+# multi-category classification, vs. binary.
+# Use: tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
+# BUT - THE LOGITS FLAG SHOULD BE FALSE IN MY BEST ESTIMATION. THIS IS THE PATTERN I SEE FOR BINARY.
+# Use: metrics=["accuracy"]
+
+
+THEN SINCE MY SCORES WERE SOMEWHAT INDECISIVE, I FOUND JUSTIFICATION TO TRY TRUE.
+
+BUT THEN THE WARNING CHANGED MY MIND BACK TO FALSE:
+
+
+log(f"Compile the EXPORT MODEL.  Multi-Category Classification.")
+# TODO: I don't have enough information to decide if from_logits should be True or False here. In at least one case
+#   on a forum there were some other factors that combined, made it better to have it True. I have little more to go
+#   on at the moment than this posting:
+# https://stackoverflow.com/questions/57253841/from-logits-true-and-from-logits-false-get-different-training-result-for-tf-loss
+log(f"SPECS: losses.SparseCategoricalCrossentropy(from_logits=True), metrics=['accuracy']")
+# TODO: As above, from_logits needs to be understood in this context right here and then documented:
+export_model.compile(
+    loss=losses.SparseCategoricalCrossentropy(from_logits=True),
+    optimizer="adam",
+    metrics=["accuracy"]
+)
+
+# TODO: UPDATE: Got a warning from using "from_logits=True", which was totally experimental anyhow.
+# [####]    EVALUATE: export_model.evaluate raw_test_dataset
+# /Users/bilbo/.pyenv/versions/ve.tensortxt/lib/python3.10/site-packages/keras/backend.py:5582:
+#   UserWarning: "`sparse_categorical_crossentropy` received `from_logits=True`, but the `output`
+#   argument was produced by a Softmax activation and thus does not represent logits. Was this intended?
+#   output, from_logits = _get_logits(
+log(f"EVALUATE: export_model.evaluate raw_test_dataset")
+# Test it with `raw_test_dataset`, which yields raw strings
+loss, accuracy = export_model.evaluate(raw_test_dataset)
+log(f"Accuracy:\n{accuracy}")
+

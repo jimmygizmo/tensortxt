@@ -318,18 +318,10 @@ export_model = tf.keras.Sequential([
     layers.Activation("sigmoid")
 ])
 
-# NOTE - Changes not exactly specified in the end of page instructions for this variant.
-# We had to do this above, but obviously these changes are also needed down here in PHASE 5 for
-# multi-category classification, vs. binary.
-# Use: tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
-# BUT - THE LOGITS FLAG SHOULD BE FALSE IN MY BEST ESTIMATION. THIS IS THE PATTERN I SEE FOR BINARY.
-# Use: metrics=["accuracy"]
 
 log(f"Compile the EXPORT MODEL.  Multi-Category Classification.")
-# TODO: THIS IS EXPORT MODEL - NOT SURE WE WANT LOGITS = TRUE. MIGHT WANT LOGITS = FALSE FOR EXPORTS. I'm learning.
-#   IT IS FALSE FOR THE BINARY EXPORT, WHILE TRUE FOR BINARY INITIAL. IF SAME PATTERN APPLIES, IT WILL BE FALSE HERE.
-log(f"SPECS: losses.SparseCategoricalCrossentropy(from_logits=????????), metrics=['accuracy']")
-# TODO: LEARN ABOUT THIS LOGITS SETTING THOROUGHLY, DOCUMENT IT IN THIS PROJECT.
+log(f"SPECS: losses.SparseCategoricalCrossentropy(from_logits=False), metrics=['accuracy']")
+# TODO: from_logits needs to be understood and then documented.
 export_model.compile(
     loss=losses.SparseCategoricalCrossentropy(from_logits=False),
     optimizer="adam",

@@ -313,8 +313,7 @@ export_model = tf.keras.Sequential([
 
 log(f"Compile the EXPORT MODEL.  Binary Sentiment Analysis.")
 log(f"SPECS: losses.BinaryCrossentropy(from_logits=False), metrics=['accuracy']")
-# TODO: NOTE: logits setting is True for the compile of INITIAL MODEL and False for the compile of the EXPORT MODEL.
-# TODO: LEARN ABOUT THIS LOGITS SETTING THOROUGHLY, DOCUMENT IT IN THIS PROJECT. IS THIS A GENERAL PATTERN?
+# TODO: from_logits needs to be understood and then documented.
 export_model.compile(
     loss=losses.BinaryCrossentropy(from_logits=False),
     optimizer="adam",
