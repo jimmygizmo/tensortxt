@@ -54,21 +54,17 @@ log(f"workspace_dir: {workspace_dir}")
 dataset_dir = Path(workspace_dir) / "dataset-stackex"
 log(f"dataset_dir: {dataset_dir}")
 
-untar_dir_says_get_file = None  # This will be set via tf.keras.utils.get_file()
-
 if dataset_dir.exists() and dataset_dir.is_dir():  # TODO: Seems like .exists() is redundant.
     log(f"* Raw dataset will not be downloaded. It appears you have already downloaded it.")
 else:
     log(f"Downloading raw dataset .tar.gz file from: {DATASET_URL}")
     # Generate a tf.data.Dataset object from text files in a directory.
-    # https://www.tensorflow.org/api_docs/python/tf/keras/utils/get_file
-    ignore_this_returned_path = tf.keras.utils.get_file(
+    tf.keras.utils.get_file(
         origin=DATASET_URL,
         untar=True,
         cache_dir=workspace_dir,
         cache_subdir=dataset_dir
     )
-    log(f"* * * * * * DEBUG * * * * * *: returned_dataset_dir: {untar_dir_says_get_file}")
     # NOTE: cache_dir will default to "~/.keras" if not specified.
 
 
@@ -120,7 +116,6 @@ log(f"Create RAW TRAINING DATASET from directory of text files.")
 batch_size = 32
 seed = 42
 
-# TODO: THIS DIR PATH SHOULD NOT BE HARDCODED.
 # https://www.tensorflow.org/api_docs/python/tf/keras/utils/text_dataset_from_directory
 raw_training_dataset = tf.keras.utils.text_dataset_from_directory(
     training_dir,

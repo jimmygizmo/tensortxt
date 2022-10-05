@@ -44,29 +44,22 @@ log_phase(f"PHASE 1:  Download raw data. Inspect directory format and a sample t
 workspace_dir = Path(WORKSPACE_DIRECTORY)
 log(f"workspace_dir: {workspace_dir}")
 
-expected_dataset_dir = Path(workspace_dir) / "dataset-imdb"
-log(f"expected_dataset_dir: {expected_dataset_dir}")
+dataset_dir = Path(workspace_dir) / "dataset-imdb"
+log(f"dataset_dir: {dataset_dir}")
 
-untar_dir_says_get_file = None  # This will be set via tf.keras.utils.get_file()
-
-if expected_dataset_dir.exists() and expected_dataset_dir.is_dir():  # TODO: Seems like .exists() is redundant.
+if dataset_dir.exists() and dataset_dir.is_dir():  # TODO: Seems like .exists() is redundant.
     log(f"* Raw dataset will not be downloaded. It appears you have already downloaded it.")
-    untar_dir_says_get_file = expected_dataset_dir
 else:
     log(f"Downloading raw dataset .tar.gz file from: {DATASET_URL}")
     # Generate a tf.data.Dataset object from text files in a directory.
-    # https://www.tensorflow.org/api_docs/python/tf/keras/utils/get_file
-    ignore_this_returned_path = tf.keras.utils.get_file(
+    tf.keras.utils.get_file(
         origin=DATASET_URL,
         untar=True,
         cache_dir=workspace_dir,
-        cache_subdir=expected_dataset_dir
+        cache_subdir=dataset_dir
     )
-    log(f"* * * * * * DEBUG * * * * * *: returned_dataset_dir: {untar_dir_says_get_file}")
     # NOTE: cache_dir will default to "~/.keras" if not specified.
 
-
-dataset_dir = untar_dir_says_get_file
 
 training_dir = Path(dataset_dir) / "train"
 log(f"training_dir: {training_dir}")
@@ -75,13 +68,20 @@ testing_dir = Path(dataset_dir) / "test"
 log(f"testing_dir: {testing_dir}")
 
 
+log(f"Folder-structure fix specific to the IMDB dataset. Move everything up and out of unwanted untar dir.")
+move_source_base = dataset_dir / "aclImdb"
+move_target_path = dataset_dir
+# This will not error and only finds files to move the first time after download.
+for node in list(move_source_base.iterdir()):
+    print(f"relocate imdb file. moving: {node}  ---->  {move_target_path}")
+    shutil.move(node, move_target_path)
+
 # Cleanup of /unsup/ dir which is specific to the IMDB project only.
-# It is in its own conditional block in this location for clarity and cleaner code.
-if expected_dataset_dir.exists() and expected_dataset_dir.is_dir():
-    dataset_dir = Path(untar_dir_says_get_file)
-    log(f"Removing unsupported data from the raw dataset.")
+possible_unsup_dir = training_dir / "unsup"
+if possible_unsup_dir.exists() and possible_unsup_dir.is_dir():
+    log(f"Removing unsupported data from the raw dataset. possible_unsup_dir: {possible_unsup_dir}")
     remove_dir = os.path.join(training_dir, "unsup")
-    shutil.rmtree(remove_dir)
+    shutil.rmtree(possible_unsup_dir)
 
 
 log(f"Lets have a quick look at the directory structures and one of the text files:")
@@ -103,7 +103,7 @@ with open(sample_file) as f:
 print("""
 Expected directory structure:
 
-main_directory/
+train/
 ...class_a/
 ......a_text_1.txt
 ......a_text_2.txt
